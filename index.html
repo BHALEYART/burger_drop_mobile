@@ -3,6 +3,8 @@
 <head>
   <title>BurgerDrop</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <script src="preloader.js"></script>
   <script>
     // Define the assets to preload
@@ -67,5 +69,33 @@
 <body>
   <canvas id="gameCanvas" width="450" height="775"></canvas>
   <script src="assets/falling_game_mobile.js"></script>
+
+  <script>
+    // Detect if the web app is running on iOS
+    var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+    // Adjust the canvas size for iOS devices
+    if (isIOS) {
+      var canvas = document.getElementById('gameCanvas');
+      var context = canvas.getContext('2d');
+
+      function resizeCanvas() {
+        var devicePixelRatio = window.devicePixelRatio || 1;
+        var screenWidth = window.innerWidth;
+        var screenHeight = window.innerHeight;
+
+        canvas.width = screenWidth * devicePixelRatio;
+        canvas.height = screenHeight * devicePixelRatio;
+
+        canvas.style.width = screenWidth + 'px';
+        canvas.style.height = screenHeight + 'px';
+
+        context.scale(devicePixelRatio, devicePixelRatio);
+      }
+
+      window.addEventListener('resize', resizeCanvas);
+      resizeCanvas();
+    }
+  </script>
 </body>
 </html>
