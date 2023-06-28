@@ -2,7 +2,9 @@
 <html>
 <head>
   <title>BurgerDrop</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <script src="preloader.js"></script>
   <script>
     // Define the assets to preload
@@ -41,6 +43,7 @@
       align-items: center;
       height: 100vh;
       position: relative;
+      overscroll-behavior: none; /* Prevent pull-to-refresh on iOS */
     }
 
     #character-container {
