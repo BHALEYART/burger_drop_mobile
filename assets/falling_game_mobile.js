@@ -14,36 +14,50 @@ var gameOverPileImage = new Image();
 var surpriseItemCounter = 0;
 var restartButton = document.createElement("button");
 var watchButton = document.createElement("button");
-var playerWidth = 70; // Set the desired width for the player image
-var playerHeight = 100; // Set the desired height for the player image
-var goodItemWidth = 40; // Set the desired width for the good item image
-var goodItemHeight = 40; // Set the desired height for the good item image
-var badItemWidth = 80; // Set the desired width for the bad item image
-var badItemHeight = 80; // Set the desired height for the bad item image
-var surpriseItemWidth = 30; // Set the desired width for the surprise item image
-var surpriseItemHeight = 50; // Set the desired height for the surprise item image
+var controlToggleButton = document.createElement("button");
+var startButton = document.createElement("button");
+var playerWidth = 70;
+var playerHeight = 100;
+var goodItemWidth = 40;
+var goodItemHeight = 40;
+var badItemWidth = 80;
+var badItemHeight = 80;
+var surpriseItemWidth = 30;
+var surpriseItemHeight = 50;
 var medicalItemWidth = 50;
 var medicalItemHeight = 50;
-var heartWidth = 30; // Set the desired width for the heart image
-var heartHeight = 30; // Set the desired height for the heart image
+var heartWidth = 30;
+var heartHeight = 30;
 var playerX = canvas.width / 2 - playerWidth / 2;
 var playerY = canvas.height - playerHeight;
-var goodItems = []; // Array to store good item positions and speeds
-var badItems = []; // Array to store bad item positions and speeds
-var surpriseItems = []; // Array to store surprise item positions and speeds
+var goodItems = [];
+var badItems = [];
+var surpriseItems = [];
 var medicalItems = [];
-var maxItems = 8; // Maximum number of items on the screen
+var maxItems = 8;
 var itemSpeed = 2;
-var maxFallSpeed = 25; //Maximum fall speed of all items
-var fallAcceleration = 0.004; // Adjust the acceleration value to control the speed increase
-var spawnCounter = 1; // Counter for spawning items
+var maxFallSpeed = 25;
+var fallAcceleration = 0.004;
+var spawnCounter = 1;
 var score = 0;
 var hearts = 3;
 var isGameOver = false;
 var isPlayerImmune = false;
-var immuneDuration = 10; // Duration of player immunity in seconds
-var immunityTimer = 0; // Remaining time for player immunity
+var immuneDuration = 10;
+var immunityTimer = 0;
+var gameStarted = false;
+var audioInitialized = false;
 
+// Tilt control variables
+var tiltEnabled = false;
+var tiltCalibrated = false;
+var tiltCenterGamma = 0;
+var tiltSensitivity = 3.5;
+var tiltSmoothing = 0.15;
+var targetPlayerX = playerX;
+var maxTiltAngle = 30;
+
+// Audio variables
 var backgroundMusic = new Audio("assets/game_music.mp3");
 backgroundMusic.loop = true;
 backgroundMusic.volume = 0.1;
@@ -58,6 +72,65 @@ lowScoreSound.volume = 0.7;
 var highScoreSound = new Audio("assets/high_score_gameover.mp3");
 highScoreSound.volume = 0.7;
 
+// Preload audio to avoid delays
+function preloadAudio() {
+  var audioFiles = [backgroundMusic, immuneMusic, goodItemSound, badItemSound, lowScoreSound, highScoreSound];
+  audioFiles.forEach(function(audio) {
+    audio.load();
+  });
+}
+
+// Initialize audio after user interaction
+function initializeAudio() {
+  if (!audioInitialized) {
+    // Play and immediately pause each sound to unlock audio
+    var audioFiles = [backgroundMusic, immuneMusic, goodItemSound, badItemSound, lowScoreSound, highScoreSound];
+    audioFiles.forEach(function(audio) {
+      var playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise.then(function() {
+          audio.pause();
+          audio.currentTime = 0;
+        }).catch(function(error) {
+          console.log("Audio initialization error:", error);
+        });
+      }
+    });
+    audioInitialized = true;
+  }
+}
+
+// Safe audio play function with promise handling
+function safePlayAudio(audio) {
+  if (audioInitialized) {
+    var playPromise = audio.play();
+    if (playPromise !== undefined) {
+      playPromise.catch(function(error) {
+        console.log("Audio play error:", error);
+      });
+    }
+  }
+}
+
+// Style start button
+startButton.innerText = "🎮 TAP TO START 🎮";
+startButton.style.position = "absolute";
+startButton.style.left = "50%";
+startButton.style.top = "50%";
+startButton.style.transform = "translate(-50%, -50%)";
+startButton.style.width = "200px";
+startButton.style.height = "60px";
+startButton.style.backgroundColor = "orange";
+startButton.style.color = "black";
+startButton.style.border = "3px solid black";
+startButton.style.borderRadius = "10px";
+startButton.style.fontSize = "18px";
+startButton.style.fontWeight = "bold";
+startButton.style.zIndex = "9999";
+startButton.style.cursor = "pointer";
+document.body.appendChild(startButton);
+
+// Style buttons
 restartButton.innerText = "Try Again?";
 restartButton.style.position = "absolute";
 restartButton.style.left = "50%";
@@ -84,6 +157,22 @@ watchButton.style.border = "none";
 watchButton.style.borderRadius = "5px";
 watchButton.style.zIndex = "9999";
 
+// Control toggle button
+controlToggleButton.innerText = "🎮 Touch";
+controlToggleButton.style.position = "absolute";
+controlToggleButton.style.right = "10px";
+controlToggleButton.style.bottom = "10px";
+controlToggleButton.style.width = "90px";
+controlToggleButton.style.height = "40px";
+controlToggleButton.style.backgroundColor = "rgba(255, 165, 0, 0.8)";
+controlToggleButton.style.color = "black";
+controlToggleButton.style.border = "2px solid black";
+controlToggleButton.style.borderRadius = "5px";
+controlToggleButton.style.zIndex = "9999";
+controlToggleButton.style.fontWeight = "bold";
+controlToggleButton.style.fontSize = "14px";
+controlToggleButton.style.display = "none"; // Hidden until game starts
+
 // Load images
 gameOverPileImage.src = "assets/game_over_pile.png";
 playerImage.src = "assets/player.png";
@@ -96,6 +185,113 @@ heartImage.src = "assets/heart.png";
 gameOverImage.src = "assets/game_over.png";
 menuOverlayImage.src = "assets/menu_shader.png";
 
+// Preload audio files
+preloadAudio();
+
+// Start game function
+function startGame() {
+  if (!gameStarted) {
+    gameStarted = true;
+    initializeAudio();
+    startButton.style.display = "none";
+    controlToggleButton.style.display = "block";
+    document.body.appendChild(controlToggleButton);
+    
+    // Start background music after a short delay
+    setTimeout(function() {
+      safePlayAudio(backgroundMusic);
+    }, 500);
+    
+    // Start the game loop
+    resetItems();
+    update();
+  }
+}
+
+// Start button listener
+startButton.addEventListener("click", startGame);
+
+// Request device orientation permission (required for iOS 13+)
+function requestOrientationPermission() {
+  if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+    DeviceOrientationEvent.requestPermission()
+      .then(function(permissionState) {
+        if (permissionState === 'granted') {
+          enableTiltControls();
+        } else {
+          alert('Tilt permission denied. Using touch controls.');
+        }
+      })
+      .catch(function(error) {
+        console.error('Error requesting orientation permission:', error);
+        alert('Could not enable tilt controls. Using touch controls.');
+      });
+  } else {
+    enableTiltControls();
+  }
+}
+
+// Enable tilt controls
+function enableTiltControls() {
+  tiltEnabled = true;
+  tiltCalibrated = false;
+  controlToggleButton.innerText = "📱 Tilt";
+  controlToggleButton.style.backgroundColor = "rgba(144, 238, 144, 0.8)";
+  
+  window.addEventListener('deviceorientation', handleTilt);
+  
+  setTimeout(function() {
+    if (!tiltCalibrated) {
+      tiltCenterGamma = 0;
+      tiltCalibrated = true;
+    }
+  }, 500);
+}
+
+// Disable tilt controls
+function disableTiltControls() {
+  tiltEnabled = false;
+  controlToggleButton.innerText = "🎮 Touch";
+  controlToggleButton.style.backgroundColor = "rgba(255, 165, 0, 0.8)";
+  window.removeEventListener('deviceorientation', handleTilt);
+}
+
+// Handle tilt input
+function handleTilt(event) {
+  if (!tiltEnabled || isGameOver || !gameStarted) return;
+  
+  var gamma = event.gamma;
+  
+  if (!tiltCalibrated) {
+    tiltCenterGamma = gamma;
+    tiltCalibrated = true;
+  }
+  
+  var relativeTilt = gamma - tiltCenterGamma;
+  relativeTilt = Math.max(-maxTiltAngle, Math.min(maxTiltAngle, relativeTilt));
+  
+  var tiltRatio = relativeTilt / maxTiltAngle;
+  targetPlayerX = (canvas.width / 2) + (tiltRatio * (canvas.width / 2) * tiltSensitivity);
+  
+  targetPlayerX = Math.max(0, Math.min(canvas.width - playerWidth, targetPlayerX));
+}
+
+// Update player position with smoothing
+function updatePlayerPosition() {
+  if (tiltEnabled && !isGameOver && gameStarted) {
+    playerX += (targetPlayerX - playerX) * tiltSmoothing;
+  }
+}
+
+// Toggle between touch and tilt controls
+controlToggleButton.addEventListener("click", function() {
+  if (!tiltEnabled) {
+    requestOrientationPermission();
+  } else {
+    disableTiltControls();
+  }
+});
+
 // Handle player-item collision
 function checkCollision() {
   for (var i = 0; i < goodItems.length; i++) {
@@ -107,8 +303,8 @@ function checkCollision() {
       playerY + playerHeight > goodItem.y
     ) {
       score += 10 * itemSpeed;
-      goodItemSound.play();
-      goodItems.splice(i, 1); // Remove the collided good item
+      safePlayAudio(goodItemSound);
+      goodItems.splice(i, 1);
     }
   }
 
@@ -123,10 +319,10 @@ function checkCollision() {
       if (!isPlayerImmune) {
         hearts--;
         score -= 50;
-        badItemSound.play();
+        safePlayAudio(badItemSound);
         maxItems += 1;
       }
-      badItems.splice(i, 1); // Remove the collided bad item
+      badItems.splice(i, 1);
     }
   }
 
@@ -141,8 +337,9 @@ function checkCollision() {
       if (hearts < 3) {
         hearts = 3;
         score += 100;
+        safePlayAudio(goodItemSound);
         maxItems += 1;
-        medicalItems.splice(i, 1); // Remove the collided medical item
+        medicalItems.splice(i, 1);
       }
     }
   }
@@ -157,10 +354,10 @@ function checkCollision() {
     ) {
       maxItems += 1;
       score += 100;
-      immuneMusic.play();
+      safePlayAudio(immuneMusic);
       isPlayerImmune = true;
       immunityTimer = immuneDuration;
-      surpriseItems.splice(i, 1); // Remove the collided surprise item
+      surpriseItems.splice(i, 1);
       if (isPlayerImmune == true) {
         playerImage.src = "assets/player.png";
       } else {
@@ -176,7 +373,6 @@ function resetItems() {
   if (goodItems.length + badItems.length + surpriseItems.length < maxItems) {
     var randomNum = Math.random();
     if (randomNum < 0.85) {
-      // Spawn a good item
       var goodItem = {
         x: Math.random() * (canvas.width - goodItemWidth),
         y: -goodItemHeight,
@@ -184,7 +380,6 @@ function resetItems() {
       };
       goodItems.push(goodItem);
     } else if (randomNum < 0.985) {
-      // Spawn a bad item
       var badItem = {
         x: Math.random() * (canvas.width - badItemWidth),
         y: -badItemHeight,
@@ -192,7 +387,6 @@ function resetItems() {
       };
       badItems.push(badItem);
     } else if (randomNum < 0.995) {
-      // Spawn a surprise item
       var surpriseItem = {
         x: Math.random() * (canvas.width - surpriseItemWidth),
         y: -surpriseItemHeight,
@@ -200,7 +394,6 @@ function resetItems() {
       };
       surpriseItems.push(surpriseItem);
     } else if (randomNum < 1.0) {
-      // Spawn a medical item
       var medicalItem = {
         x: Math.random() * (canvas.width - medicalItemWidth),
         y: -medicalItemHeight,
@@ -213,24 +406,24 @@ function resetItems() {
 
 // Update game objects and render
 function update() {
+  if (!gameStarted) return;
+  
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // Draw player
+  updatePlayerPosition();
+
   if (isPlayerImmune) {
     ctx.drawImage(playerImage, playerX, playerY, playerWidth, playerHeight);
-    immuneMusic.volume = 0.3;
   } else {
     ctx.drawImage(
       playerImageOriginal,
       playerX,
       playerY,
       playerWidth,
-      playerHeight,
+      playerHeight
     );
-    immuneMusic.volume = 0;
   }
 
-  // Draw good items
   for (var i = 0; i < goodItems.length; i++) {
     var goodItem = goodItems[i];
     ctx.drawImage(
@@ -242,11 +435,10 @@ function update() {
     );
     goodItem.y += goodItem.speed;
     if (goodItem.y > canvas.height) {
-      goodItems.splice(i, 1); // Remove the off-screen good item
+      goodItems.splice(i, 1);
     }
   }
 
-  // Draw bad items
   for (var i = 0; i < badItems.length; i++) {
     var badItem = badItems[i];
     ctx.drawImage(
@@ -258,11 +450,10 @@ function update() {
     );
     badItem.y += badItem.speed;
     if (badItem.y > canvas.height) {
-      badItems.splice(i, 1); // Remove the off-screen bad item
+      badItems.splice(i, 1);
     }
   }
 
-  // Draw surprise items
   for (var i = 0; i < surpriseItems.length; i++) {
     var surpriseItem = surpriseItems[i];
     ctx.drawImage(
@@ -274,11 +465,10 @@ function update() {
     );
     surpriseItem.y += surpriseItem.speed;
     if (surpriseItem.y > canvas.height) {
-      surpriseItems.splice(i, 1); // Remove the off-screen surprise item
+      surpriseItems.splice(i, 1);
     }
   }
 
-  // Draw medical items
   for (var i = 0; i < medicalItems.length; i++) {
     var medicalItem = medicalItems[i];
     ctx.drawImage(
@@ -290,55 +480,55 @@ function update() {
     );
     medicalItem.y += medicalItem.speed;
     if (medicalItem.y > canvas.height) {
-      medicalItems.splice(i, 1); // Remove the off-screen medical item
+      medicalItems.splice(i, 1);
     }
   }
 
-  // Check player-item collision
   checkCollision();
 
-  // Draw score
   ctx.font = "24px Arial";
   ctx.fillStyle = "orange";
-  ctx.strokeStyle = "black"; // Set the outline color to black
-  ctx.lineWidth = 2; // Set the outline width
+  ctx.strokeStyle = "black";
+  ctx.lineWidth = 2;
   ctx.strokeText("Score: " + Math.floor(score), 10, 30);
   ctx.fillText("Score: " + Math.floor(score), 10, 30);
   if(score <= 0) {
     score = 0; 
   }
 
-  // Draw Speed
   ctx.font = "24px Arial";
   ctx.fillStyle = "yellow";
-  ctx.strokeStyle = "black"; // Set the outline color to black
-  ctx.lineWidth = 2; // Set the outline width
+  ctx.strokeStyle = "black";
+  ctx.lineWidth = 2;
   ctx.strokeText("SpeedX: " + Math.floor(itemSpeed), 180, 30);
   ctx.fillText("SpeedX: " + Math.floor(itemSpeed), 180, 30);
-  if(score <= 0) {
-    score = 0; 
-  }
 
-  // Draw hearts
   for (var i = 0; i < hearts; i++) {
     var heartX = canvas.width - (i + 1) * (heartWidth + 10);
     var heartY = 10;
     ctx.drawImage(heartImage, heartX, heartY, heartWidth, heartHeight);
   }
 
- // Draw immunity timer
-if (isPlayerImmune) {
+  if (isPlayerImmune) {
     ctx.font = "24px Arial";
     ctx.fillStyle = "lightgreen";
-    ctx.strokeStyle = "black"; // Set the outline color to black
-    ctx.lineWidth = 2; // Set the outline width
+    ctx.strokeStyle = "black";
+    ctx.lineWidth = 2;
     ctx.strokeText("Immunity: " + Math.floor(immunityTimer) + "s", 10, 60);
     ctx.fillText("Immunity: " + Math.floor(immunityTimer) + "s", 10, 60);
-  };  
+  }
 
-  // Check if player lost all hearts
+  ctx.font = "16px Arial";
+  ctx.fillStyle = tiltEnabled ? "lightgreen" : "orange";
+  ctx.strokeStyle = "black";
+  ctx.lineWidth = 2;
+  var controlText = tiltEnabled ? "📱 TILT MODE" : "🎮 TOUCH MODE";
+  ctx.strokeText(controlText, 10, canvas.height - 20);
+  ctx.fillText(controlText, 10, canvas.height - 20);
+
   if (hearts <= 0) {
     isGameOver = true;
+    backgroundMusic.pause();
     ctx.drawImage(
       gameOverImage,
       canvas.width / 2 - 150,
@@ -347,41 +537,37 @@ if (isPlayerImmune) {
       300
     );
     if (score < 1000) {
-        lowScoreSound.play();
-      } else {
-        highScoreSound.play();
-      }
+      safePlayAudio(lowScoreSound);
+    } else {
+      safePlayAudio(highScoreSound);
+    }
     document.body.appendChild(restartButton);
     document.body.appendChild(watchButton);
     ctx.drawImage(
       gameOverPileImage,
-      -70,                          // X-coordinate of the image's top-left corner
-      320,        // Y-coordinate of the image's top-left corner
-      600,               // Width of the image
-      600                         // Height of the image
+      -70,
+      320,
+      600,
+      600
     );
-    
-    return; // Exit the update function
-    
+    return;
   }
 
-  // Update immunity timer
   if (isPlayerImmune) {
-    immunityTimer -= 1 / 60; // Decrement timer by 1 second per frame
+    immunityTimer -= 1 / 60;
     if (immunityTimer <= 0) {
       isPlayerImmune = false;
+      immuneMusic.pause();
+      immuneMusic.currentTime = 0;
       playerImage.src = "assets/player_original.png";
     }
   }
 
-  // Increase overall fall speed
   itemSpeed += fallAcceleration;
   if (itemSpeed > maxFallSpeed) {
     itemSpeed = maxFallSpeed;
   }
-  
 
-  // Spawn new items
   spawnCounter++;
   if (spawnCounter % 10 === 0) {
     resetItems();
@@ -392,27 +578,22 @@ if (isPlayerImmune) {
 
 // restart button listener
 restartButton.addEventListener("click", function () {
-    window.location.reload();
-  });
+  window.location.reload();
+});
 
 // Add click event listener to URL button
 watchButton.addEventListener("click", function() {
-    window.location.href = ("https://bombpop.link/bigheadbillions"); // Replace with your desired URL
-  });
-
-// Handle mouse movement
-canvas.addEventListener("touchmove", function (event) {
-  var rect = canvas.getBoundingClientRect();
-  playerX = event.touches[0].clientX - rect.left - playerWidth / 2;
-
+  window.location.href = ("https://bombpop.link/bigheadbillions");
 });
 
-// Define a function to play background music
-function playBackgroundMusic() {
-  if(itemSpeed >= 2.1){
-    backgroundMusic.play();
+// Handle touch movement
+canvas.addEventListener("touchmove", function (event) {
+  if (!tiltEnabled && !isGameOver && gameStarted) {
+    var rect = canvas.getBoundingClientRect();
+    playerX = event.touches[0].clientX - rect.left - playerWidth / 2;
+    targetPlayerX = playerX;
   }
-}
+});
 
 function adjustCanvasSize() {
   canvas.width = window.innerWidth;
@@ -421,9 +602,3 @@ function adjustCanvasSize() {
 
 window.addEventListener("resize", adjustCanvasSize);
 adjustCanvasSize();
-
-// Start the game loop
-resetItems();
-setTimeout(playBackgroundMusic, 1000); // Play background music after 1 second
-update();
-
