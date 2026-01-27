@@ -22,7 +22,7 @@ var GAME_WIDTH = 450;
 var GAME_HEIGHT = 800;
 
 var playerWidth = 70;
-var playerHeight = 100;
+var playerHeight = 120;
 var goodItemWidth = 40;
 var goodItemHeight = 40;
 var badItemWidth = 80;
