@@ -815,7 +815,7 @@ restartButton.addEventListener("click", function () {
 
 // Add click event listener to URL button
 watchButton.addEventListener("click", function() {
-  window.location.href = ("https://bombpop.link/bigheadbillions");
+  window.location.href = ("https://x.com/bigheadbillions");
 });
 
 // Handle mouse movement (PC)
