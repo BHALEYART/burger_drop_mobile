@@ -16,13 +16,15 @@ var restartButton = document.createElement("button");
 var watchButton = document.createElement("button");
 var controlToggleButton = document.createElement("button");
 var startButton = document.createElement("button");
+var musicMuteButton = document.createElement("button");
+var sfxMuteButton = document.createElement("button");
 
 // Fixed canvas dimensions for vertical format
 var GAME_WIDTH = 450;
 var GAME_HEIGHT = 800;
 
 var playerWidth = 70;
-var playerHeight = 106;
+var playerHeight = 100;
 var goodItemWidth = 40;
 var goodItemHeight = 40;
 var badItemWidth = 80;
@@ -57,6 +59,8 @@ var immuneDuration = 10;
 var immunityTimer = 0;
 var gameStarted = false;
 var audioInitialized = false;
+var musicMuted = false;
+var sfxMuted = false;
 
 // Device detection
 var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -115,17 +119,23 @@ function initializeAudio() {
 // Safe audio play function with promise handling
 function safePlayAudio(audio) {
   if (audioInitialized) {
-    var playPromise = audio.play();
-    if (playPromise !== undefined) {
-      playPromise.catch(function(error) {
-        console.log("Audio play error:", error);
-      });
+    // Check if this is background music or SFX
+    var isMusic = (audio === backgroundMusic || audio === immuneMusic);
+    var isMuted = isMusic ? musicMuted : sfxMuted;
+    
+    if (!isMuted) {
+      var playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(function(error) {
+          console.log("Audio play error:", error);
+        });
+      }
     }
   }
 }
 
 // Style start button
-startButton.innerText = isMobile ? "🎮 TAP TO START 🎮" : "🎮 CLICK TO START 🎮";
+startButton.innerText = isMobile ? "🎮 TAP TO START 🎮" : "🍔 Start 🍔";
 startButton.style.position = "absolute";
 startButton.style.left = "50%";
 startButton.style.top = "50%";
@@ -172,6 +182,40 @@ watchButton.style.borderRadius = "5px";
 watchButton.style.zIndex = "9999";
 watchButton.style.cursor = "pointer";
 watchButton.style.fontSize = "16px";
+
+// Music mute button
+musicMuteButton.innerText = "🎵";
+musicMuteButton.style.position = "absolute";
+musicMuteButton.style.left = "10px";
+musicMuteButton.style.top = "10px";
+musicMuteButton.style.width = "45px";
+musicMuteButton.style.height = "45px";
+musicMuteButton.style.backgroundColor = "rgba(255, 215, 0, 0.8)";
+musicMuteButton.style.color = "black";
+musicMuteButton.style.border = "2px solid black";
+musicMuteButton.style.borderRadius = "50%";
+musicMuteButton.style.zIndex = "9999";
+musicMuteButton.style.cursor = "pointer";
+musicMuteButton.style.fontSize = "20px";
+musicMuteButton.style.display = "none";
+musicMuteButton.title = "Toggle Music";
+
+// SFX mute button
+sfxMuteButton.innerText = "🔊";
+sfxMuteButton.style.position = "absolute";
+sfxMuteButton.style.left = "65px";
+sfxMuteButton.style.top = "10px";
+sfxMuteButton.style.width = "45px";
+sfxMuteButton.style.height = "45px";
+sfxMuteButton.style.backgroundColor = "rgba(255, 215, 0, 0.8)";
+sfxMuteButton.style.color = "black";
+sfxMuteButton.style.border = "2px solid black";
+sfxMuteButton.style.borderRadius = "50%";
+sfxMuteButton.style.zIndex = "9999";
+sfxMuteButton.style.cursor = "pointer";
+sfxMuteButton.style.fontSize = "20px";
+sfxMuteButton.style.display = "none";
+sfxMuteButton.title = "Toggle Sound Effects";
 
 // Control toggle button (only on mobile)
 if (isMobile) {
@@ -235,6 +279,12 @@ function startGame() {
     initializeAudio();
     startButton.style.display = "none";
     
+    // Show mute buttons
+    musicMuteButton.style.display = "block";
+    sfxMuteButton.style.display = "block";
+    document.body.appendChild(musicMuteButton);
+    document.body.appendChild(sfxMuteButton);
+    
     if (isMobile) {
       controlToggleButton.style.display = "block";
       document.body.appendChild(controlToggleButton);
@@ -246,7 +296,9 @@ function startGame() {
     
     // Start background music after a short delay
     setTimeout(function() {
-      safePlayAudio(backgroundMusic);
+      if (!musicMuted) {
+        safePlayAudio(backgroundMusic);
+      }
     }, 500);
     
     // Start the game loop
@@ -257,6 +309,37 @@ function startGame() {
 
 // Start button listener
 startButton.addEventListener("click", startGame);
+
+// Music mute button listener
+musicMuteButton.addEventListener("click", function() {
+  musicMuted = !musicMuted;
+  if (musicMuted) {
+    musicMuteButton.innerText = "🎵";
+    musicMuteButton.style.textDecoration = "line-through";
+    musicMuteButton.style.backgroundColor = "rgba(169, 169, 169, 0.8)";
+    backgroundMusic.pause();
+    immuneMusic.pause();
+  } else {
+    musicMuteButton.innerText = "🎵";
+    musicMuteButton.style.textDecoration = "none";
+    musicMuteButton.style.backgroundColor = "rgba(255, 215, 0, 0.8)";
+    if (gameStarted && !isGameOver) {
+      safePlayAudio(backgroundMusic);
+    }
+  }
+});
+
+// SFX mute button listener
+sfxMuteButton.addEventListener("click", function() {
+  sfxMuted = !sfxMuted;
+  if (sfxMuted) {
+    sfxMuteButton.innerText = "🔇";
+    sfxMuteButton.style.backgroundColor = "rgba(169, 169, 169, 0.8)";
+  } else {
+    sfxMuteButton.innerText = "🔊";
+    sfxMuteButton.style.backgroundColor = "rgba(255, 215, 0, 0.8)";
+  }
+});
 
 // Request device orientation permission (required for iOS 13+)
 function requestOrientationPermission() {
@@ -642,7 +725,9 @@ function update() {
 
   if (hearts <= 0) {
     isGameOver = true;
-    backgroundMusic.pause();
+    if (!musicMuted) {
+      backgroundMusic.pause();
+    }
     ctx.drawImage(
       gameOverImage,
       GAME_WIDTH / 2 - 150,
@@ -667,12 +752,15 @@ function update() {
     return;
   }
 
+  // Update immunity timer
   if (isPlayerImmune) {
     immunityTimer -= 1 / 60;
     if (immunityTimer <= 0) {
       isPlayerImmune = false;
-      immuneMusic.pause();
-      immuneMusic.currentTime = 0;
+      if (!musicMuted) {
+        immuneMusic.pause();
+        immuneMusic.currentTime = 0;
+      }
       playerImage.src = "assets/player_original.png";
     }
   }
