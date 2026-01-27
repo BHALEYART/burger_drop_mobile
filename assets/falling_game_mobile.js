@@ -247,6 +247,32 @@ heartImage.src = "assets/heart.png";
 gameOverImage.src = "assets/game_over.png";
 menuOverlayImage.src = "assets/menu_shader.png";
 
+// Image loading counter
+var imagesLoaded = 0;
+var totalImages = 10;
+var allImagesLoaded = false;
+
+// Function to check if all images are loaded
+function imageLoaded() {
+  imagesLoaded++;
+  if (imagesLoaded === totalImages) {
+    allImagesLoaded = true;
+    console.log('All images loaded successfully');
+  }
+}
+
+// Add load event listeners to all images
+gameOverPileImage.onload = imageLoaded;
+playerImage.onload = imageLoaded;
+playerImageOriginal.onload = imageLoaded;
+goodItemImage.onload = imageLoaded;
+badItemImage.onload = imageLoaded;
+surpriseItemImage.onload = imageLoaded;
+medicalItemImage.onload = imageLoaded;
+heartImage.onload = imageLoaded;
+gameOverImage.onload = imageLoaded;
+menuOverlayImage.onload = imageLoaded;
+
 // Preload audio files
 preloadAudio();
 
@@ -254,6 +280,10 @@ preloadAudio();
 function setCanvasSize() {
   canvas.width = GAME_WIDTH;
   canvas.height = GAME_HEIGHT;
+  
+  // Enable image smoothing for crisp rendering
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
   
   // Center canvas on screen with CSS
   canvas.style.maxWidth = "100%";
@@ -543,7 +573,7 @@ function resetItems() {
 
 // Update game objects and render
 function update() {
-  if (!gameStarted) return;
+  if (!gameStarted || !allImagesLoaded) return;
   
   ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
