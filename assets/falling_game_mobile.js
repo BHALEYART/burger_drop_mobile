@@ -16,6 +16,11 @@ var restartButton = document.createElement("button");
 var watchButton = document.createElement("button");
 var controlToggleButton = document.createElement("button");
 var startButton = document.createElement("button");
+
+// Fixed canvas dimensions for vertical format
+var GAME_WIDTH = 450;
+var GAME_HEIGHT = 800;
+
 var playerWidth = 70;
 var playerHeight = 100;
 var goodItemWidth = 40;
@@ -28,8 +33,8 @@ var medicalItemWidth = 50;
 var medicalItemHeight = 50;
 var heartWidth = 30;
 var heartHeight = 30;
-var playerX = canvas.width / 2 - playerWidth / 2;
-var playerY = canvas.height - playerHeight;
+var playerX = GAME_WIDTH / 2 - playerWidth / 2;
+var playerY = GAME_HEIGHT - playerHeight - 10;
 var goodItems = [];
 var badItems = [];
 var surpriseItems = [];
@@ -47,6 +52,9 @@ var immuneDuration = 10;
 var immunityTimer = 0;
 var gameStarted = false;
 var audioInitialized = false;
+
+// Device detection
+var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
 // Tilt control variables
 var tiltEnabled = false;
@@ -83,7 +91,6 @@ function preloadAudio() {
 // Initialize audio after user interaction
 function initializeAudio() {
   if (!audioInitialized) {
-    // Play and immediately pause each sound to unlock audio
     var audioFiles = [backgroundMusic, immuneMusic, goodItemSound, badItemSound, lowScoreSound, highScoreSound];
     audioFiles.forEach(function(audio) {
       var playPromise = audio.play();
@@ -113,7 +120,7 @@ function safePlayAudio(audio) {
 }
 
 // Style start button
-startButton.innerText = "🎮 TAP TO START 🎮";
+startButton.innerText = isMobile ? "🎮 TAP TO START 🎮" : "🎮 CLICK TO START 🎮";
 startButton.style.position = "absolute";
 startButton.style.left = "50%";
 startButton.style.top = "50%";
@@ -136,42 +143,48 @@ restartButton.style.position = "absolute";
 restartButton.style.left = "50%";
 restartButton.style.top = "70%";
 restartButton.style.transform = "translate(-50%, -50%)";
-restartButton.style.width = "100px";
-restartButton.style.height = "40px";
+restartButton.style.width = "120px";
+restartButton.style.height = "45px";
 restartButton.style.backgroundColor = "orange";
 restartButton.style.color = "black";
 restartButton.style.border = "none";
 restartButton.style.borderRadius = "5px";
 restartButton.style.zIndex = "9999";
+restartButton.style.cursor = "pointer";
+restartButton.style.fontSize = "16px";
 
 watchButton.innerText = "BHB Links";
 watchButton.style.position = "absolute";
 watchButton.style.left = "50%";
 watchButton.style.top = "80%";
 watchButton.style.transform = "translate(-50%, -50%)";
-watchButton.style.width = "100px";
-watchButton.style.height = "40px";
+watchButton.style.width = "120px";
+watchButton.style.height = "45px";
 watchButton.style.backgroundColor = "orange";
 watchButton.style.color = "black";
 watchButton.style.border = "none";
 watchButton.style.borderRadius = "5px";
 watchButton.style.zIndex = "9999";
+watchButton.style.cursor = "pointer";
+watchButton.style.fontSize = "16px";
 
-// Control toggle button
-controlToggleButton.innerText = "🎮 Touch";
-controlToggleButton.style.position = "absolute";
-controlToggleButton.style.right = "10px";
-controlToggleButton.style.bottom = "10px";
-controlToggleButton.style.width = "90px";
-controlToggleButton.style.height = "40px";
-controlToggleButton.style.backgroundColor = "rgba(255, 165, 0, 0.8)";
-controlToggleButton.style.color = "black";
-controlToggleButton.style.border = "2px solid black";
-controlToggleButton.style.borderRadius = "5px";
-controlToggleButton.style.zIndex = "9999";
-controlToggleButton.style.fontWeight = "bold";
-controlToggleButton.style.fontSize = "14px";
-controlToggleButton.style.display = "none"; // Hidden until game starts
+// Control toggle button (only on mobile)
+if (isMobile) {
+  controlToggleButton.innerText = "🎮 Touch";
+  controlToggleButton.style.position = "absolute";
+  controlToggleButton.style.right = "10px";
+  controlToggleButton.style.bottom = "10px";
+  controlToggleButton.style.width = "90px";
+  controlToggleButton.style.height = "40px";
+  controlToggleButton.style.backgroundColor = "rgba(255, 165, 0, 0.8)";
+  controlToggleButton.style.color = "black";
+  controlToggleButton.style.border = "2px solid black";
+  controlToggleButton.style.borderRadius = "5px";
+  controlToggleButton.style.zIndex = "9999";
+  controlToggleButton.style.fontWeight = "bold";
+  controlToggleButton.style.fontSize = "14px";
+  controlToggleButton.style.display = "none";
+}
 
 // Load images
 gameOverPileImage.src = "assets/game_over_pile.png";
@@ -188,14 +201,39 @@ menuOverlayImage.src = "assets/menu_shader.png";
 // Preload audio files
 preloadAudio();
 
+// Set fixed canvas size
+function setCanvasSize() {
+  canvas.width = GAME_WIDTH;
+  canvas.height = GAME_HEIGHT;
+  
+  // Center canvas on screen with CSS
+  canvas.style.maxWidth = "100%";
+  canvas.style.maxHeight = "100vh";
+  canvas.style.width = GAME_WIDTH + "px";
+  canvas.style.height = GAME_HEIGHT + "px";
+  
+  // On mobile, scale to fit screen while maintaining aspect ratio
+  if (isMobile) {
+    var scale = Math.min(
+      window.innerWidth / GAME_WIDTH,
+      window.innerHeight / GAME_HEIGHT
+    );
+    canvas.style.width = (GAME_WIDTH * scale) + "px";
+    canvas.style.height = (GAME_HEIGHT * scale) + "px";
+  }
+}
+
 // Start game function
 function startGame() {
   if (!gameStarted) {
     gameStarted = true;
     initializeAudio();
     startButton.style.display = "none";
-    controlToggleButton.style.display = "block";
-    document.body.appendChild(controlToggleButton);
+    
+    if (isMobile) {
+      controlToggleButton.style.display = "block";
+      document.body.appendChild(controlToggleButton);
+    }
     
     // Start background music after a short delay
     setTimeout(function() {
@@ -271,9 +309,9 @@ function handleTilt(event) {
   relativeTilt = Math.max(-maxTiltAngle, Math.min(maxTiltAngle, relativeTilt));
   
   var tiltRatio = relativeTilt / maxTiltAngle;
-  targetPlayerX = (canvas.width / 2) + (tiltRatio * (canvas.width / 2) * tiltSensitivity);
+  targetPlayerX = (GAME_WIDTH / 2) + (tiltRatio * (GAME_WIDTH / 2) * tiltSensitivity);
   
-  targetPlayerX = Math.max(0, Math.min(canvas.width - playerWidth, targetPlayerX));
+  targetPlayerX = Math.max(0, Math.min(GAME_WIDTH - playerWidth, targetPlayerX));
 }
 
 // Update player position with smoothing
@@ -284,13 +322,15 @@ function updatePlayerPosition() {
 }
 
 // Toggle between touch and tilt controls
-controlToggleButton.addEventListener("click", function() {
-  if (!tiltEnabled) {
-    requestOrientationPermission();
-  } else {
-    disableTiltControls();
-  }
-});
+if (isMobile) {
+  controlToggleButton.addEventListener("click", function() {
+    if (!tiltEnabled) {
+      requestOrientationPermission();
+    } else {
+      disableTiltControls();
+    }
+  });
+}
 
 // Handle player-item collision
 function checkCollision() {
@@ -374,28 +414,28 @@ function resetItems() {
     var randomNum = Math.random();
     if (randomNum < 0.85) {
       var goodItem = {
-        x: Math.random() * (canvas.width - goodItemWidth),
+        x: Math.random() * (GAME_WIDTH - goodItemWidth),
         y: -goodItemHeight,
         speed: itemSpeed
       };
       goodItems.push(goodItem);
     } else if (randomNum < 0.985) {
       var badItem = {
-        x: Math.random() * (canvas.width - badItemWidth),
+        x: Math.random() * (GAME_WIDTH - badItemWidth),
         y: -badItemHeight,
         speed: itemSpeed
       };
       badItems.push(badItem);
     } else if (randomNum < 0.995) {
       var surpriseItem = {
-        x: Math.random() * (canvas.width - surpriseItemWidth),
+        x: Math.random() * (GAME_WIDTH - surpriseItemWidth),
         y: -surpriseItemHeight,
         speed: itemSpeed
       };
       surpriseItems.push(surpriseItem);
     } else if (randomNum < 1.0) {
       var medicalItem = {
-        x: Math.random() * (canvas.width - medicalItemWidth),
+        x: Math.random() * (GAME_WIDTH - medicalItemWidth),
         y: -medicalItemHeight,
         speed: itemSpeed
       };
@@ -408,7 +448,7 @@ function resetItems() {
 function update() {
   if (!gameStarted) return;
   
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
   updatePlayerPosition();
 
@@ -434,7 +474,7 @@ function update() {
       goodItemHeight
     );
     goodItem.y += goodItem.speed;
-    if (goodItem.y > canvas.height) {
+    if (goodItem.y > GAME_HEIGHT) {
       goodItems.splice(i, 1);
     }
   }
@@ -449,7 +489,7 @@ function update() {
       badItemHeight
     );
     badItem.y += badItem.speed;
-    if (badItem.y > canvas.height) {
+    if (badItem.y > GAME_HEIGHT) {
       badItems.splice(i, 1);
     }
   }
@@ -464,7 +504,7 @@ function update() {
       surpriseItemHeight
     );
     surpriseItem.y += surpriseItem.speed;
-    if (surpriseItem.y > canvas.height) {
+    if (surpriseItem.y > GAME_HEIGHT) {
       surpriseItems.splice(i, 1);
     }
   }
@@ -479,7 +519,7 @@ function update() {
       medicalItemHeight
     );
     medicalItem.y += medicalItem.speed;
-    if (medicalItem.y > canvas.height) {
+    if (medicalItem.y > GAME_HEIGHT) {
       medicalItems.splice(i, 1);
     }
   }
@@ -504,7 +544,7 @@ function update() {
   ctx.fillText("SpeedX: " + Math.floor(itemSpeed), 180, 30);
 
   for (var i = 0; i < hearts; i++) {
-    var heartX = canvas.width - (i + 1) * (heartWidth + 10);
+    var heartX = GAME_WIDTH - (i + 1) * (heartWidth + 10);
     var heartY = 10;
     ctx.drawImage(heartImage, heartX, heartY, heartWidth, heartHeight);
   }
@@ -518,21 +558,31 @@ function update() {
     ctx.fillText("Immunity: " + Math.floor(immunityTimer) + "s", 10, 60);
   }
 
-  ctx.font = "16px Arial";
-  ctx.fillStyle = tiltEnabled ? "lightgreen" : "orange";
-  ctx.strokeStyle = "black";
-  ctx.lineWidth = 2;
-  var controlText = tiltEnabled ? "📱 TILT MODE" : "🎮 TOUCH MODE";
-  ctx.strokeText(controlText, 10, canvas.height - 20);
-  ctx.fillText(controlText, 10, canvas.height - 20);
+  // Show control mode indicator only on mobile
+  if (isMobile) {
+    ctx.font = "16px Arial";
+    ctx.fillStyle = tiltEnabled ? "lightgreen" : "orange";
+    ctx.strokeStyle = "black";
+    ctx.lineWidth = 2;
+    var controlText = tiltEnabled ? "📱 TILT MODE" : "🎮 TOUCH MODE";
+    ctx.strokeText(controlText, 10, GAME_HEIGHT - 20);
+    ctx.fillText(controlText, 10, GAME_HEIGHT - 20);
+  } else {
+    ctx.font = "16px Arial";
+    ctx.fillStyle = "lightblue";
+    ctx.strokeStyle = "black";
+    ctx.lineWidth = 2;
+    ctx.strokeText("🖱️ MOUSE MODE", 10, GAME_HEIGHT - 20);
+    ctx.fillText("🖱️ MOUSE MODE", 10, GAME_HEIGHT - 20);
+  }
 
   if (hearts <= 0) {
     isGameOver = true;
     backgroundMusic.pause();
     ctx.drawImage(
       gameOverImage,
-      canvas.width / 2 - 150,
-      canvas.height / 2 - 150,
+      GAME_WIDTH / 2 - 150,
+      GAME_HEIGHT / 2 - 150,
       300,
       300
     );
@@ -546,7 +596,7 @@ function update() {
     ctx.drawImage(
       gameOverPileImage,
       -70,
-      320,
+      GAME_HEIGHT - 480,
       600,
       600
     );
@@ -586,19 +636,34 @@ watchButton.addEventListener("click", function() {
   window.location.href = ("https://bombpop.link/bigheadbillions");
 });
 
-// Handle touch movement
-canvas.addEventListener("touchmove", function (event) {
-  if (!tiltEnabled && !isGameOver && gameStarted) {
+// Handle mouse movement (PC)
+canvas.addEventListener("mousemove", function(event) {
+  if (!isMobile && !isGameOver && gameStarted) {
     var rect = canvas.getBoundingClientRect();
-    playerX = event.touches[0].clientX - rect.left - playerWidth / 2;
-    targetPlayerX = playerX;
+    var scaleX = GAME_WIDTH / rect.width;
+    var mouseX = (event.clientX - rect.left) * scaleX;
+    playerX = mouseX - playerWidth / 2;
+    playerX = Math.max(0, Math.min(GAME_WIDTH - playerWidth, playerX));
   }
 });
 
-function adjustCanvasSize() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-}
+// Handle touch movement (Mobile)
+canvas.addEventListener("touchmove", function (event) {
+  if (!tiltEnabled && !isGameOver && gameStarted) {
+    event.preventDefault();
+    var rect = canvas.getBoundingClientRect();
+    var scaleX = GAME_WIDTH / rect.width;
+    var touchX = (event.touches[0].clientX - rect.left) * scaleX;
+    playerX = touchX - playerWidth / 2;
+    playerX = Math.max(0, Math.min(GAME_WIDTH - playerWidth, playerX));
+    targetPlayerX = playerX;
+  }
+}, { passive: false });
 
-window.addEventListener("resize", adjustCanvasSize);
-adjustCanvasSize();
+// Initialize canvas size
+setCanvasSize();
+
+// Handle window resize for mobile
+window.addEventListener("resize", function() {
+  setCanvasSize();
+});
