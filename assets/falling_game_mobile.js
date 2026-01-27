@@ -62,7 +62,7 @@ var audioInitialized = false;
 var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
 // Tilt control variables
-var tiltEnabled = false;
+var tiltEnabled = isMobile; // Default to tilt on mobile
 var tiltCalibrated = false;
 var tiltCenterGamma = 0;
 var tiltSensitivity = 3.5;
@@ -175,13 +175,13 @@ watchButton.style.fontSize = "16px";
 
 // Control toggle button (only on mobile)
 if (isMobile) {
-  controlToggleButton.innerText = "🎮 Touch";
+  controlToggleButton.innerText = "📱 Tilt";
   controlToggleButton.style.position = "absolute";
   controlToggleButton.style.right = "10px";
   controlToggleButton.style.bottom = "10px";
   controlToggleButton.style.width = "90px";
   controlToggleButton.style.height = "40px";
-  controlToggleButton.style.backgroundColor = "rgba(255, 165, 0, 0.8)";
+  controlToggleButton.style.backgroundColor = "rgba(144, 238, 144, 0.8)";
   controlToggleButton.style.color = "black";
   controlToggleButton.style.border = "2px solid black";
   controlToggleButton.style.borderRadius = "5px";
@@ -238,6 +238,10 @@ function startGame() {
     if (isMobile) {
       controlToggleButton.style.display = "block";
       document.body.appendChild(controlToggleButton);
+      // Enable tilt controls by default on mobile
+      if (tiltEnabled) {
+        requestOrientationPermission();
+      }
     }
     
     // Start background music after a short delay
@@ -294,7 +298,7 @@ function enableTiltControls() {
 // Disable tilt controls
 function disableTiltControls() {
   tiltEnabled = false;
-  controlToggleButton.innerText = "🎮 Touch";
+  controlToggleButton.innerText = "👆 Drag";
   controlToggleButton.style.backgroundColor = "rgba(255, 165, 0, 0.8)";
   window.removeEventListener('deviceorientation', handleTilt);
 }
@@ -461,6 +465,43 @@ function update() {
   ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
   updatePlayerPosition();
+  
+  // Draw title at top
+  ctx.font = "bold 36px Arial";
+  ctx.fillStyle = "#FFD700";
+  ctx.strokeStyle = "black";
+  ctx.lineWidth = 4;
+  ctx.textAlign = "center";
+  ctx.strokeText("BURGER DROP", GAME_WIDTH / 2, 50);
+  ctx.fillText("BURGER DROP", GAME_WIDTH / 2, 50);
+  
+  // Draw platform support text
+  ctx.font = "14px Arial";
+  ctx.fillStyle = "white";
+  ctx.strokeStyle = "black";
+  ctx.lineWidth = 2;
+  ctx.strokeText("Mobile & PC Supported", GAME_WIDTH / 2, 75);
+  ctx.fillText("Mobile & PC Supported", GAME_WIDTH / 2, 75);
+  
+  // Draw instructions
+  ctx.font = "16px Arial";
+  ctx.fillStyle = "lightblue";
+  ctx.strokeStyle = "black";
+  ctx.lineWidth = 2;
+  if (isMobile) {
+    ctx.strokeText("Tilt or Drag to Move", GAME_WIDTH / 2, 100);
+    ctx.fillText("Tilt or Drag to Move", GAME_WIDTH / 2, 100);
+    ctx.strokeText("Catch Burgers! Avoid Trash!", GAME_WIDTH / 2, 120);
+    ctx.fillText("Catch Burgers! Avoid Trash!", GAME_WIDTH / 2, 120);
+  } else {
+    ctx.strokeText("Move Mouse to Control", GAME_WIDTH / 2, 100);
+    ctx.fillText("Move Mouse to Control", GAME_WIDTH / 2, 100);
+    ctx.strokeText("Catch Burgers! Avoid Trash!", GAME_WIDTH / 2, 120);
+    ctx.fillText("Catch Burgers! Avoid Trash!", GAME_WIDTH / 2, 120);
+  }
+  
+  // Reset text alignment for other text
+  ctx.textAlign = "left";
 
   if (isPlayerImmune) {
     ctx.drawImage(playerImage, playerX, playerY, playerWidth, playerHeight);
@@ -536,26 +577,29 @@ function update() {
 
   checkCollision();
 
+  // Draw score (moved down to accommodate title)
   ctx.font = "24px Arial";
   ctx.fillStyle = "orange";
   ctx.strokeStyle = "black";
   ctx.lineWidth = 2;
-  ctx.strokeText("Score: " + Math.floor(score), 10, 30);
-  ctx.fillText("Score: " + Math.floor(score), 10, 30);
+  ctx.strokeText("Score: " + Math.floor(score), 10, 150);
+  ctx.fillText("Score: " + Math.floor(score), 10, 150);
   if(score <= 0) {
     score = 0; 
   }
 
+  // Draw Speed
   ctx.font = "24px Arial";
   ctx.fillStyle = "yellow";
   ctx.strokeStyle = "black";
   ctx.lineWidth = 2;
-  ctx.strokeText("SpeedX: " + Math.floor(itemSpeed), 180, 30);
-  ctx.fillText("SpeedX: " + Math.floor(itemSpeed), 180, 30);
+  ctx.strokeText("SpeedX: " + Math.floor(itemSpeed), 180, 150);
+  ctx.fillText("SpeedX: " + Math.floor(itemSpeed), 180, 150);
 
+  // Draw hearts (moved down to accommodate title)
   for (var i = 0; i < hearts; i++) {
     var heartX = GAME_WIDTH - (i + 1) * (heartWidth + 10);
-    var heartY = 10;
+    var heartY = 125;
     ctx.drawImage(heartImage, heartX, heartY, heartWidth, heartHeight);
   }
 
@@ -564,8 +608,8 @@ function update() {
     ctx.fillStyle = "lightgreen";
     ctx.strokeStyle = "black";
     ctx.lineWidth = 2;
-    ctx.strokeText("Immunity: " + Math.floor(immunityTimer) + "s", 10, 60);
-    ctx.fillText("Immunity: " + Math.floor(immunityTimer) + "s", 10, 60);
+    ctx.strokeText("Immunity: " + Math.floor(immunityTimer) + "s", 10, 180);
+    ctx.fillText("Immunity: " + Math.floor(immunityTimer) + "s", 10, 180);
   }
 
   // Show control mode indicator only on mobile
@@ -574,17 +618,27 @@ function update() {
     ctx.fillStyle = tiltEnabled ? "lightgreen" : "orange";
     ctx.strokeStyle = "black";
     ctx.lineWidth = 2;
-    var controlText = tiltEnabled ? "📱 TILT MODE" : "🎮 TOUCH MODE";
-    ctx.strokeText(controlText, 10, GAME_HEIGHT - 20);
-    ctx.fillText(controlText, 10, GAME_HEIGHT - 20);
+    var controlText = tiltEnabled ? "📱 TILT MODE" : "👆 DRAG MODE";
+    ctx.strokeText(controlText, 10, GAME_HEIGHT - 40);
+    ctx.fillText(controlText, 10, GAME_HEIGHT - 40);
   } else {
     ctx.font = "16px Arial";
     ctx.fillStyle = "lightblue";
     ctx.strokeStyle = "black";
     ctx.lineWidth = 2;
-    ctx.strokeText("🖱️ MOUSE MODE", 10, GAME_HEIGHT - 20);
-    ctx.fillText("🖱️ MOUSE MODE", 10, GAME_HEIGHT - 20);
+    ctx.strokeText("🖱️ MOUSE MODE", 10, GAME_HEIGHT - 40);
+    ctx.fillText("🖱️ MOUSE MODE", 10, GAME_HEIGHT - 40);
   }
+  
+  // Draw credits at bottom center
+  ctx.font = "14px Arial";
+  ctx.fillStyle = "white";
+  ctx.strokeStyle = "black";
+  ctx.lineWidth = 2;
+  ctx.textAlign = "center";
+  ctx.strokeText("Created by BHaleyArt", GAME_WIDTH / 2, GAME_HEIGHT - 10);
+  ctx.fillText("Created by BHaleyArt", GAME_WIDTH / 2, GAME_HEIGHT - 10);
+  ctx.textAlign = "left";
 
   if (hearts <= 0) {
     isGameOver = true;
