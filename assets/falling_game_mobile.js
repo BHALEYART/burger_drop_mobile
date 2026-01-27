@@ -203,8 +203,8 @@ musicMuteButton.title = "Toggle Music";
 // SFX mute button
 sfxMuteButton.innerText = "🔊";
 sfxMuteButton.style.position = "absolute";
-sfxMuteButton.style.left = "65px";
-sfxMuteButton.style.top = "10px";
+sfxMuteButton.style.left = "10px";
+sfxMuteButton.style.top = "65px";
 sfxMuteButton.style.width = "45px";
 sfxMuteButton.style.height = "45px";
 sfxMuteButton.style.backgroundColor = "rgba(255, 215, 0, 0.8)";
