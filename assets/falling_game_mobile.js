@@ -22,7 +22,7 @@ var GAME_WIDTH = 450;
 var GAME_HEIGHT = 800;
 
 var playerWidth = 70;
-var playerHeight = 120;
+var playerHeight = 106;
 var goodItemWidth = 40;
 var goodItemHeight = 40;
 var badItemWidth = 80;
@@ -36,7 +36,7 @@ var heartHeight = 30;
 // Screen margins for boundaries
 var SCREEN_MARGIN_LEFT = 10;
 var SCREEN_MARGIN_RIGHT = 10;
-var SCREEN_MARGIN_BOTTOM = 40;
+var SCREEN_MARGIN_BOTTOM = 50;
 
 var playerX = GAME_WIDTH / 2 - playerWidth / 2;
 var playerY = GAME_HEIGHT - playerHeight - SCREEN_MARGIN_BOTTOM;
