@@ -36,7 +36,7 @@ var heartHeight = 30;
 // Screen margins for boundaries
 var SCREEN_MARGIN_LEFT = 10;
 var SCREEN_MARGIN_RIGHT = 10;
-var SCREEN_MARGIN_BOTTOM = 20;
+var SCREEN_MARGIN_BOTTOM = 60;
 
 var playerX = GAME_WIDTH / 2 - playerWidth / 2;
 var playerY = GAME_HEIGHT - playerHeight - SCREEN_MARGIN_BOTTOM;
