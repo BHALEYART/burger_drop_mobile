@@ -33,8 +33,13 @@ var medicalItemWidth = 50;
 var medicalItemHeight = 50;
 var heartWidth = 30;
 var heartHeight = 30;
+// Screen margins for boundaries
+var SCREEN_MARGIN_LEFT = 10;
+var SCREEN_MARGIN_RIGHT = 10;
+var SCREEN_MARGIN_BOTTOM = 20;
+
 var playerX = GAME_WIDTH / 2 - playerWidth / 2;
-var playerY = GAME_HEIGHT - playerHeight - 10;
+var playerY = GAME_HEIGHT - playerHeight - SCREEN_MARGIN_BOTTOM;
 var goodItems = [];
 var badItems = [];
 var surpriseItems = [];
@@ -311,13 +316,16 @@ function handleTilt(event) {
   var tiltRatio = relativeTilt / maxTiltAngle;
   targetPlayerX = (GAME_WIDTH / 2) + (tiltRatio * (GAME_WIDTH / 2) * tiltSensitivity);
   
-  targetPlayerX = Math.max(0, Math.min(GAME_WIDTH - playerWidth, targetPlayerX));
+  // Constrain to screen boundaries with margins
+  targetPlayerX = Math.max(SCREEN_MARGIN_LEFT, Math.min(GAME_WIDTH - playerWidth - SCREEN_MARGIN_RIGHT, targetPlayerX));
 }
 
 // Update player position with smoothing
 function updatePlayerPosition() {
   if (tiltEnabled && !isGameOver && gameStarted) {
     playerX += (targetPlayerX - playerX) * tiltSmoothing;
+    // Ensure constraints are enforced even during smoothing
+    playerX = Math.max(SCREEN_MARGIN_LEFT, Math.min(GAME_WIDTH - playerWidth - SCREEN_MARGIN_RIGHT, playerX));
   }
 }
 
@@ -412,30 +420,32 @@ function checkCollision() {
 function resetItems() {
   if (goodItems.length + badItems.length + surpriseItems.length < maxItems) {
     var randomNum = Math.random();
+    var spawnableWidth = GAME_WIDTH - SCREEN_MARGIN_LEFT - SCREEN_MARGIN_RIGHT;
+    
     if (randomNum < 0.85) {
       var goodItem = {
-        x: Math.random() * (GAME_WIDTH - goodItemWidth),
+        x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - goodItemWidth),
         y: -goodItemHeight,
         speed: itemSpeed
       };
       goodItems.push(goodItem);
     } else if (randomNum < 0.985) {
       var badItem = {
-        x: Math.random() * (GAME_WIDTH - badItemWidth),
+        x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - badItemWidth),
         y: -badItemHeight,
         speed: itemSpeed
       };
       badItems.push(badItem);
     } else if (randomNum < 0.995) {
       var surpriseItem = {
-        x: Math.random() * (GAME_WIDTH - surpriseItemWidth),
+        x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - surpriseItemWidth),
         y: -surpriseItemHeight,
         speed: itemSpeed
       };
       surpriseItems.push(surpriseItem);
     } else if (randomNum < 1.0) {
       var medicalItem = {
-        x: Math.random() * (GAME_WIDTH - medicalItemWidth),
+        x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - medicalItemWidth),
         y: -medicalItemHeight,
         speed: itemSpeed
       };
@@ -643,7 +653,8 @@ canvas.addEventListener("mousemove", function(event) {
     var scaleX = GAME_WIDTH / rect.width;
     var mouseX = (event.clientX - rect.left) * scaleX;
     playerX = mouseX - playerWidth / 2;
-    playerX = Math.max(0, Math.min(GAME_WIDTH - playerWidth, playerX));
+    // Constrain to screen boundaries with margins
+    playerX = Math.max(SCREEN_MARGIN_LEFT, Math.min(GAME_WIDTH - playerWidth - SCREEN_MARGIN_RIGHT, playerX));
   }
 });
 
@@ -655,7 +666,8 @@ canvas.addEventListener("touchmove", function (event) {
     var scaleX = GAME_WIDTH / rect.width;
     var touchX = (event.touches[0].clientX - rect.left) * scaleX;
     playerX = touchX - playerWidth / 2;
-    playerX = Math.max(0, Math.min(GAME_WIDTH - playerWidth, playerX));
+    // Constrain to screen boundaries with margins
+    playerX = Math.max(SCREEN_MARGIN_LEFT, Math.min(GAME_WIDTH - playerWidth - SCREEN_MARGIN_RIGHT, playerX));
     targetPlayerX = playerX;
   }
 }, { passive: false });
