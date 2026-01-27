@@ -405,7 +405,7 @@ SOFTWARE.
 **BHaleyArt**
 
 - GitHub: [@BHALEYART](https://github.com/BHALEYART)
-- Website: [bombpop.link/bigheadbillions](https://bombpop.link/bigheadbillions)
+- Website: https://youtube.com/@bhaleyart
 
 ---
 
