@@ -741,10 +741,10 @@ function update() {
   ctx.strokeText(speedText, 220, 150);
   ctx.fillText(speedText, 220, 150);
 
-  // Draw hearts (moved down to accommodate title)
+  // Draw hearts (stacked vertically on right side)
   for (var i = 0; i < hearts; i++) {
-    var heartX = GAME_WIDTH - (i + 1) * (heartWidth + 10);
-    var heartY = 125;
+    var heartX = GAME_WIDTH - heartWidth - 10;  // Right side with 10px margin
+    var heartY = 10 + (i * (heartHeight + 10));  // Stack vertically with 10px spacing
     ctx.drawImage(heartImage, heartX, heartY, heartWidth, heartHeight);
   }
 
