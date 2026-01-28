@@ -24,7 +24,7 @@ var GAME_WIDTH = 450;
 var GAME_HEIGHT = 800;
 
 var playerWidth = 70;
-var playerHeight = 100;
+var playerHeight = 106;
 var goodItemWidth = 40;
 var goodItemHeight = 40;
 var badItemWidth = 80;
@@ -48,7 +48,7 @@ var surpriseItems = [];
 var medicalItems = [];
 var maxItems = 8;
 var itemSpeed = 2;
-var maxFallSpeed = 25;
+var maxFallSpeed = 24;  // Changed from 25 to 24
 var fallAcceleration = 0.004;
 var spawnCounter = 1;
 var score = 0;
@@ -61,6 +61,8 @@ var gameStarted = false;
 var audioInitialized = false;
 var musicMuted = false;
 var sfxMuted = false;
+var damageFlash = 0;  // New variable for damage flash effect
+var damageFlashDecay = 0.05;  // How fast the flash fades
 
 // Device detection
 var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -150,13 +152,29 @@ startButton.style.fontSize = "18px";
 startButton.style.fontWeight = "bold";
 startButton.style.zIndex = "9999";
 startButton.style.cursor = "pointer";
+
+// Create start menu title
+var startTitle = document.createElement("div");
+startTitle.innerText = "BURGER DROP";
+startTitle.style.position = "absolute";
+startTitle.style.left = "50%";
+startTitle.style.top = "35%";
+startTitle.style.transform = "translate(-50%, -50%)";
+startTitle.style.fontSize = "48px";
+startTitle.style.fontWeight = "bold";
+startTitle.style.color = "#FFD700";
+startTitle.style.textShadow = "4px 4px 0px black";
+startTitle.style.fontFamily = "Arial, sans-serif";
+startTitle.style.zIndex = "9999";
+startTitle.style.textAlign = "center";
+document.body.appendChild(startTitle);
 document.body.appendChild(startButton);
 
 // Style buttons
 restartButton.innerText = "Try Again?";
 restartButton.style.position = "absolute";
 restartButton.style.left = "50%";
-restartButton.style.top = "70%";
+restartButton.style.top = "60%";  // Raised from 70% to 60%
 restartButton.style.transform = "translate(-50%, -50%)";
 restartButton.style.width = "120px";
 restartButton.style.height = "45px";
@@ -171,7 +189,7 @@ restartButton.style.fontSize = "16px";
 watchButton.innerText = "BHB Links";
 watchButton.style.position = "absolute";
 watchButton.style.left = "50%";
-watchButton.style.top = "80%";
+watchButton.style.top = "70%";  // Raised from 80% to 70%
 watchButton.style.transform = "translate(-50%, -50%)";
 watchButton.style.width = "120px";
 watchButton.style.height = "45px";
@@ -308,6 +326,7 @@ function startGame() {
     gameStarted = true;
     initializeAudio();
     startButton.style.display = "none";
+    startTitle.style.display = "none";  // Hide title when game starts
     
     // Show mute buttons
     musicMuteButton.style.display = "block";
@@ -459,15 +478,20 @@ if (isMobile) {
 
 // Handle player-item collision
 function checkCollision() {
+  // Hitbox margins - make hitboxes 4 pixels smaller on each side (8 total per dimension)
+  var hitboxMargin = 4;
+  
   for (var i = 0; i < goodItems.length; i++) {
     var goodItem = goodItems[i];
     if (
-      playerX < goodItem.x + goodItemWidth &&
-      playerX + playerWidth > goodItem.x &&
-      playerY < goodItem.y + goodItemHeight &&
-      playerY + playerHeight > goodItem.y
+      playerX + hitboxMargin < goodItem.x + goodItemWidth - hitboxMargin &&
+      playerX + playerWidth - hitboxMargin > goodItem.x + hitboxMargin &&
+      playerY + hitboxMargin < goodItem.y + goodItemHeight - hitboxMargin &&
+      playerY + playerHeight - hitboxMargin > goodItem.y + hitboxMargin
     ) {
-      score += 10 * itemSpeed;
+      // Increased points at MAX speed
+      var pointMultiplier = itemSpeed >= maxFallSpeed ? 25 : 10;
+      score += pointMultiplier * itemSpeed;
       safePlayAudio(goodItemSound);
       goodItems.splice(i, 1);
     }
@@ -476,16 +500,17 @@ function checkCollision() {
   for (var i = 0; i < badItems.length; i++) {
     var badItem = badItems[i];
     if (
-      playerX < badItem.x + badItemWidth &&
-      playerX + playerWidth > badItem.x &&
-      playerY < badItem.y + badItemHeight &&
-      playerY + playerHeight > badItem.y
+      playerX + hitboxMargin < badItem.x + badItemWidth - hitboxMargin &&
+      playerX + playerWidth - hitboxMargin > badItem.x + hitboxMargin &&
+      playerY + hitboxMargin < badItem.y + badItemHeight - hitboxMargin &&
+      playerY + playerHeight - hitboxMargin > badItem.y + hitboxMargin
     ) {
       if (!isPlayerImmune) {
         hearts--;
         score -= 50;
         safePlayAudio(badItemSound);
         maxItems += 1;
+        damageFlash = 1.0;  // Trigger full damage flash
       }
       badItems.splice(i, 1);
     }
@@ -494,15 +519,14 @@ function checkCollision() {
   for (var i = 0; i < medicalItems.length; i++) {
     var medicalItem = medicalItems[i];
     if (
-      playerX < medicalItem.x + medicalItemWidth &&
-      playerX + playerWidth > medicalItem.x &&
-      playerY < medicalItem.y + medicalItemHeight &&
-      playerY + playerHeight > medicalItem.y
+      playerX + hitboxMargin < medicalItem.x + medicalItemWidth - hitboxMargin &&
+      playerX + playerWidth - hitboxMargin > medicalItem.x + hitboxMargin &&
+      playerY + hitboxMargin < medicalItem.y + medicalItemHeight - hitboxMargin &&
+      playerY + playerHeight - hitboxMargin > medicalItem.y + hitboxMargin
     ) {
       if (hearts < 3) {
         hearts = 3;
         score += 100;
-        safePlayAudio(goodItemSound);
         maxItems += 1;
         medicalItems.splice(i, 1);
       }
@@ -512,10 +536,10 @@ function checkCollision() {
   for (var i = 0; i < surpriseItems.length; i++) {
     var surpriseItem = surpriseItems[i];
     if (
-      playerX < surpriseItem.x + surpriseItemWidth &&
-      playerX + playerWidth > surpriseItem.x &&
-      playerY < surpriseItem.y + surpriseItemHeight &&
-      playerY + playerHeight > surpriseItem.y
+      playerX + hitboxMargin < surpriseItem.x + surpriseItemWidth - hitboxMargin &&
+      playerX + playerWidth - hitboxMargin > surpriseItem.x + hitboxMargin &&
+      playerY + hitboxMargin < surpriseItem.y + surpriseItemHeight - hitboxMargin &&
+      playerY + playerHeight - hitboxMargin > surpriseItem.y + hitboxMargin
     ) {
       maxItems += 1;
       score += 100;
@@ -539,28 +563,35 @@ function resetItems() {
     var randomNum = Math.random();
     var spawnableWidth = GAME_WIDTH - SCREEN_MARGIN_LEFT - SCREEN_MARGIN_RIGHT;
     
-    if (randomNum < 0.85) {
+    // Adjust spawn rates at MAX speed
+    var isMaxSpeed = itemSpeed >= maxFallSpeed;
+    var burgerChance = 0.85;      // 85% burgers (same)
+    var trashChance = 0.985;      // 13.5% trash (same)
+    var surpriseChance = 0.993;   // 0.8% invincibility (reduced from 1%)
+    var medicalChance = 1.0;      // 0.7% medical (increased from 0.5%)
+    
+    if (randomNum < burgerChance) {
       var goodItem = {
         x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - goodItemWidth),
         y: -goodItemHeight,
         speed: itemSpeed
       };
       goodItems.push(goodItem);
-    } else if (randomNum < 0.985) {
+    } else if (randomNum < trashChance) {
       var badItem = {
         x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - badItemWidth),
         y: -badItemHeight,
         speed: itemSpeed
       };
       badItems.push(badItem);
-    } else if (randomNum < 0.995) {
+    } else if (randomNum < surpriseChance) {
       var surpriseItem = {
         x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - surpriseItemWidth),
         y: -surpriseItemHeight,
         speed: itemSpeed
       };
       surpriseItems.push(surpriseItem);
-    } else if (randomNum < 1.0) {
+    } else if (randomNum < medicalChance) {
       var medicalItem = {
         x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - medicalItemWidth),
         y: -medicalItemHeight,
@@ -579,25 +610,25 @@ function update() {
 
   updatePlayerPosition();
   
-  // Draw title at top
-  ctx.font = "bold 36px Arial";
+  // Draw title at top - Updated font
+  ctx.font = "bold 42px 'Arial Black', Arial, sans-serif";
   ctx.fillStyle = "#FFD700";
   ctx.strokeStyle = "black";
-  ctx.lineWidth = 4;
+  ctx.lineWidth = 5;
   ctx.textAlign = "center";
   ctx.strokeText("BURGER DROP", GAME_WIDTH / 2, 50);
   ctx.fillText("BURGER DROP", GAME_WIDTH / 2, 50);
   
-  // Draw platform support text
-  ctx.font = "14px Arial";
+  // Draw platform support text - Updated font
+  ctx.font = "bold 16px Arial";
   ctx.fillStyle = "white";
   ctx.strokeStyle = "black";
   ctx.lineWidth = 2;
   ctx.strokeText("Mobile & PC Supported", GAME_WIDTH / 2, 75);
   ctx.fillText("Mobile & PC Supported", GAME_WIDTH / 2, 75);
   
-  // Draw instructions
-  ctx.font = "16px Arial";
+  // Draw instructions - Updated font
+  ctx.font = "bold 18px Arial";
   ctx.fillStyle = "lightblue";
   ctx.strokeStyle = "black";
   ctx.lineWidth = 2;
@@ -690,24 +721,25 @@ function update() {
 
   checkCollision();
 
-  // Draw score (moved down to accommodate title)
-  ctx.font = "24px Arial";
+  // Draw score (moved down to accommodate title) - Updated font style
+  ctx.font = "bold 28px 'Arial Black', Arial, sans-serif";
   ctx.fillStyle = "orange";
   ctx.strokeStyle = "black";
-  ctx.lineWidth = 2;
-  ctx.strokeText("Score: " + Math.floor(score), 10, 150);
-  ctx.fillText("Score: " + Math.floor(score), 10, 150);
+  ctx.lineWidth = 3;
+  ctx.strokeText("SCORE: " + Math.floor(score), 10, 150);
+  ctx.fillText("SCORE: " + Math.floor(score), 10, 150);
   if(score <= 0) {
     score = 0; 
   }
 
-  // Draw Speed
-  ctx.font = "24px Arial";
+  // Draw Speed - Updated font style and MAX indicator
+  ctx.font = "bold 28px 'Arial Black', Arial, sans-serif";
   ctx.fillStyle = "yellow";
   ctx.strokeStyle = "black";
-  ctx.lineWidth = 2;
-  ctx.strokeText("SpeedX: " + Math.floor(itemSpeed), 180, 150);
-  ctx.fillText("SpeedX: " + Math.floor(itemSpeed), 180, 150);
+  ctx.lineWidth = 3;
+  var speedText = itemSpeed >= maxFallSpeed ? "SPEED: MAX" : "SPEED: " + Math.floor(itemSpeed) + "X";
+  ctx.strokeText(speedText, 220, 150);
+  ctx.fillText(speedText, 220, 150);
 
   // Draw hearts (moved down to accommodate title)
   for (var i = 0; i < hearts; i++) {
@@ -717,12 +749,12 @@ function update() {
   }
 
   if (isPlayerImmune) {
-    ctx.font = "24px Arial";
+    ctx.font = "bold 26px 'Arial Black', Arial, sans-serif";
     ctx.fillStyle = "lightgreen";
     ctx.strokeStyle = "black";
-    ctx.lineWidth = 2;
-    ctx.strokeText("Immunity: " + Math.floor(immunityTimer) + "s", 10, 180);
-    ctx.fillText("Immunity: " + Math.floor(immunityTimer) + "s", 10, 180);
+    ctx.lineWidth = 3;
+    ctx.strokeText("IMMUNITY: " + Math.floor(immunityTimer) + "s", 10, 180);
+    ctx.fillText("IMMUNITY: " + Math.floor(immunityTimer) + "s", 10, 180);
   }
 
   // Show control mode indicator only on mobile
@@ -752,6 +784,14 @@ function update() {
   ctx.strokeText("Created by BHaleyArt", GAME_WIDTH / 2, GAME_HEIGHT - 10);
   ctx.fillText("Created by BHaleyArt", GAME_WIDTH / 2, GAME_HEIGHT - 10);
   ctx.textAlign = "left";
+  
+  // Draw damage flash effect (red screen overlay)
+  if (damageFlash > 0) {
+    ctx.fillStyle = "rgba(255, 0, 0, " + (damageFlash * 0.4) + ")";  // Red with transparency
+    ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+    damageFlash -= damageFlashDecay;  // Fade out
+    if (damageFlash < 0) damageFlash = 0;
+  }
 
   if (hearts <= 0) {
     isGameOver = true;
@@ -761,7 +801,7 @@ function update() {
     ctx.drawImage(
       gameOverImage,
       GAME_WIDTH / 2 - 150,
-      GAME_HEIGHT / 2 - 150,
+      GAME_HEIGHT / 2 - 200,  // Raised from -150 to -200
       300,
       300
     );
@@ -775,7 +815,7 @@ function update() {
     ctx.drawImage(
       gameOverPileImage,
       -70,
-      GAME_HEIGHT - 480,
+      GAME_HEIGHT - 530,  // Raised from -480 to -530
       600,
       600
     );
@@ -815,7 +855,7 @@ restartButton.addEventListener("click", function () {
 
 // Add click event listener to URL button
 watchButton.addEventListener("click", function() {
-  window.location.href = ("https://x.com/bigheadbillions");
+  window.location.href = ("https://bombpop.link/bigheadbillions");
 });
 
 // Handle mouse movement (PC)
