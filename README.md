@@ -8,7 +8,7 @@ A fast-paced arcade game where you catch falling burgers while avoiding trash! P
 
 ## 🎮 Play Now
 
-**Live Demo:** [Your GitHub Pages URL Here]
+**Live Demo:** (https://bhaleyart.github.io/burger_drop_mobile/)
 
 ---
 
