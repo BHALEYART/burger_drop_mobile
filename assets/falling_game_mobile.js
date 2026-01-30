@@ -85,11 +85,6 @@ var fireDuration = 10;
 var fireTimer = 0;
 var fireItemWidth = 40;
 var fireItemHeight = 40;
-var fireActive = false;
-var fireDuration = 10;
-var fireTimer = 0;
-var fireItemWidth = 40;
-var fireItemHeight = 40;
 var comboActive = false;  // Combo power (shield + fire combined)
 var comboDuration = 10;
 var comboTimer = 0;
@@ -1056,7 +1051,7 @@ function update() {
   
   // Draw fire line effect (80 pixels above player) - Auto-collects burgers only
   if (fireActive) {
-    var fireY = playerY - 80;
+    var fireY = playerY - 380;
     ctx.strokeStyle = "red";
     ctx.lineWidth = 4;
     ctx.shadowColor = "red";
