@@ -46,6 +46,9 @@ var goodItems = [];
 var badItems = [];
 var surpriseItems = [];
 var medicalItems = [];
+var shieldItems = [];  // New shield item array
+var clockItems = [];   // New clock item array
+var nukeItems = [];    // New nuke item array
 var maxItems = 8;
 var itemSpeed = 2;
 var maxFallSpeed = 24;  // Changed from 25 to 24
@@ -63,6 +66,17 @@ var musicMuted = false;
 var sfxMuted = false;
 var damageFlash = 0;  // New variable for damage flash effect
 var damageFlashDecay = 0.05;  // How fast the flash fades
+
+// New power-up variables
+var shieldActive = false;
+var shieldDuration = 10;
+var shieldTimer = 0;
+var shieldItemWidth = 40;
+var shieldItemHeight = 40;
+var clockItemWidth = 40;
+var clockItemHeight = 40;
+var nukeItemWidth = 40;
+var nukeItemHeight = 40;
 
 // Device detection
 var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -491,7 +505,14 @@ function checkCollision() {
     ) {
       // Increased points at MAX speed
       var pointMultiplier = itemSpeed >= maxFallSpeed ? 25 : 10;
-      score += pointMultiplier * itemSpeed;
+      var points = pointMultiplier * itemSpeed;
+      
+      // Triple points if passed through shield
+      if (goodItem.shieldTripled) {
+        points *= 3;
+      }
+      
+      score += points;
       safePlayAudio(goodItemSound);
       goodItems.splice(i, 1);
     }
@@ -555,20 +576,84 @@ function checkCollision() {
       surpriseItemCounter++;
     }
   }
+  
+  // Shield item collision
+  for (var i = 0; i < shieldItems.length; i++) {
+    var shieldItem = shieldItems[i];
+    if (
+      playerX + hitboxMargin < shieldItem.x + shieldItemWidth - hitboxMargin &&
+      playerX + playerWidth - hitboxMargin > shieldItem.x + hitboxMargin &&
+      playerY + hitboxMargin < shieldItem.y + shieldItemHeight - hitboxMargin &&
+      playerY + playerHeight - hitboxMargin > shieldItem.y + hitboxMargin
+    ) {
+      shieldActive = true;
+      shieldTimer = shieldDuration;
+      score += 100;
+      safePlayAudio(goodItemSound);
+      shieldItems.splice(i, 1);
+    }
+  }
+  
+  // Clock item collision
+  for (var i = 0; i < clockItems.length; i++) {
+    var clockItem = clockItems[i];
+    if (
+      playerX + hitboxMargin < clockItem.x + clockItemWidth - hitboxMargin &&
+      playerX + playerWidth - hitboxMargin > clockItem.x + hitboxMargin &&
+      playerY + hitboxMargin < clockItem.y + clockItemHeight - hitboxMargin &&
+      playerY + playerHeight - hitboxMargin > clockItem.y + hitboxMargin
+    ) {
+      itemSpeed = 14;  // Slow down to speed 14
+      score += 100;
+      safePlayAudio(goodItemSound);
+      clockItems.splice(i, 1);
+    }
+  }
+  
+  // Nuke item collision
+  for (var i = 0; i < nukeItems.length; i++) {
+    var nukeItem = nukeItems[i];
+    if (
+      playerX + hitboxMargin < nukeItem.x + nukeItemWidth - hitboxMargin &&
+      playerX + playerWidth - hitboxMargin > nukeItem.x + hitboxMargin &&
+      playerY + hitboxMargin < nukeItem.y + nukeItemHeight - hitboxMargin &&
+      playerY + playerHeight - hitboxMargin > nukeItem.y + hitboxMargin
+    ) {
+      // Clear all items and award double points for burgers
+      for (var j = 0; j < goodItems.length; j++) {
+        var pointMultiplier = itemSpeed >= maxFallSpeed ? 25 : 10;
+        score += (pointMultiplier * itemSpeed) * 2;  // Double points
+      }
+      // Clear all arrays
+      goodItems = [];
+      badItems = [];
+      surpriseItems = [];
+      medicalItems = [];
+      shieldItems = [];
+      clockItems = [];
+      // Reset speed to 10
+      itemSpeed = 10;
+      score += 200;  // Bonus for using nuke
+      safePlayAudio(goodItemSound);
+      nukeItems.splice(i, 1);
+    }
+  }
 }
 
 // Reset item position and speed
 function resetItems() {
-  if (goodItems.length + badItems.length + surpriseItems.length < maxItems) {
+  if (goodItems.length + badItems.length + surpriseItems.length + shieldItems.length + clockItems.length + nukeItems.length < maxItems) {
     var randomNum = Math.random();
     var spawnableWidth = GAME_WIDTH - SCREEN_MARGIN_LEFT - SCREEN_MARGIN_RIGHT;
     
-    // Adjust spawn rates at MAX speed
-    var isMaxSpeed = itemSpeed >= maxFallSpeed;
-    var burgerChance = 0.85;      // 85% burgers (same)
-    var trashChance = 0.985;      // 13.5% trash (same)
-    var surpriseChance = 0.993;   // 0.8% invincibility (reduced from 1%)
-    var medicalChance = 1.0;      // 0.7% medical (increased from 0.5%)
+    // Spawn rates
+    var burgerChance = 0.85;       // 85% burgers
+    var trashChance = 0.975;       // 12.5% trash
+    var surpriseChance = 0.985;    // 1.0% invincibility (same rarity)
+    var shieldChance = 0.995;      // 1.0% shield (same as invincibility)
+    var medicalChance = 0.9985;    // 0.35% medical
+    var clockChance = 0.99985;     // 0.35% clock (same as medical)
+    var nukeChance = 1.0;          // 0.15% nuke (rarer than invincibility)
     
     if (randomNum < burgerChance) {
       var goodItem = {
@@ -591,6 +676,13 @@ function resetItems() {
         speed: itemSpeed
       };
       surpriseItems.push(surpriseItem);
+    } else if (randomNum < shieldChance) {
+      var shieldItem = {
+        x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - shieldItemWidth),
+        y: -shieldItemHeight,
+        speed: itemSpeed
+      };
+      shieldItems.push(shieldItem);
     } else if (randomNum < medicalChance) {
       var medicalItem = {
         x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - medicalItemWidth),
@@ -598,6 +690,20 @@ function resetItems() {
         speed: itemSpeed
       };
       medicalItems.push(medicalItem);
+    } else if (randomNum < clockChance) {
+      var clockItem = {
+        x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - clockItemWidth),
+        y: -clockItemHeight,
+        speed: itemSpeed
+      };
+      clockItems.push(clockItem);
+    } else if (randomNum < nukeChance) {
+      var nukeItem = {
+        x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - nukeItemWidth),
+        y: -nukeItemHeight,
+        speed: itemSpeed
+      };
+      nukeItems.push(nukeItem);
     }
   }
 }
@@ -719,6 +825,78 @@ function update() {
     }
   }
 
+  // Draw shield items (blue placeholder squares)
+  for (var i = 0; i < shieldItems.length; i++) {
+    var shieldItem = shieldItems[i];
+    ctx.fillStyle = "blue";
+    ctx.fillRect(shieldItem.x, shieldItem.y, shieldItemWidth, shieldItemHeight);
+    ctx.strokeStyle = "white";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(shieldItem.x, shieldItem.y, shieldItemWidth, shieldItemHeight);
+    shieldItem.y += shieldItem.speed;
+    if (shieldItem.y > GAME_HEIGHT) {
+      shieldItems.splice(i, 1);
+    }
+  }
+
+  // Draw clock items (cyan placeholder squares)
+  for (var i = 0; i < clockItems.length; i++) {
+    var clockItem = clockItems[i];
+    ctx.fillStyle = "cyan";
+    ctx.fillRect(clockItem.x, clockItem.y, clockItemWidth, clockItemHeight);
+    ctx.strokeStyle = "white";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(clockItem.x, clockItem.y, clockItemWidth, clockItemHeight);
+    clockItem.y += clockItem.speed;
+    if (clockItem.y > GAME_HEIGHT) {
+      clockItems.splice(i, 1);
+    }
+  }
+
+  // Draw nuke items (orange/red placeholder squares)
+  for (var i = 0; i < nukeItems.length; i++) {
+    var nukeItem = nukeItems[i];
+    ctx.fillStyle = "#FF4500";  // Orange-red
+    ctx.fillRect(nukeItem.x, nukeItem.y, nukeItemWidth, nukeItemHeight);
+    ctx.strokeStyle = "yellow";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(nukeItem.x, nukeItem.y, nukeItemWidth, nukeItemHeight);
+    nukeItem.y += nukeItem.speed;
+    if (nukeItem.y > GAME_HEIGHT) {
+      nukeItems.splice(i, 1);
+    }
+  }
+
+  // Draw shield line effect (40 pixels above player)
+  if (shieldActive) {
+    var shieldY = playerY - 40;
+    ctx.strokeStyle = "cyan";
+    ctx.lineWidth = 4;
+    ctx.shadowColor = "cyan";
+    ctx.shadowBlur = 10;
+    ctx.beginPath();
+    ctx.moveTo(0, shieldY);
+    ctx.lineTo(GAME_WIDTH, shieldY);
+    ctx.stroke();
+    ctx.shadowBlur = 0;  // Reset shadow
+    
+    // Check for items passing through shield
+    for (var i = badItems.length - 1; i >= 0; i--) {
+      var badItem = badItems[i];
+      if (badItem.y + badItemHeight >= shieldY && badItem.y <= shieldY + 4) {
+        badItems.splice(i, 1);  // Destroy bad item silently
+      }
+    }
+    
+    // Triple burger points when passing through shield
+    for (var i = 0; i < goodItems.length; i++) {
+      var goodItem = goodItems[i];
+      if (goodItem.y + goodItemHeight >= shieldY && goodItem.y <= shieldY + 4 && !goodItem.shieldTripled) {
+        goodItem.shieldTripled = true;  // Mark as tripled
+      }
+    }
+  }
+
   checkCollision();
 
   // Draw score (moved down to accommodate title) - Updated font style
@@ -755,6 +933,16 @@ function update() {
     ctx.lineWidth = 3;
     ctx.strokeText("IMMUNITY: " + Math.floor(immunityTimer) + "s", 10, 180);
     ctx.fillText("IMMUNITY: " + Math.floor(immunityTimer) + "s", 10, 180);
+  }
+  
+  // Draw shield timer
+  if (shieldActive) {
+    ctx.font = "bold 26px 'Arial Black', Arial, sans-serif";
+    ctx.fillStyle = "cyan";
+    ctx.strokeStyle = "black";
+    ctx.lineWidth = 3;
+    ctx.strokeText("SHIELD: " + Math.floor(shieldTimer) + "s", 10, 210);
+    ctx.fillText("SHIELD: " + Math.floor(shieldTimer) + "s", 10, 210);
   }
 
   // Show control mode indicator only on mobile
@@ -834,8 +1022,18 @@ function update() {
       playerImage.src = "assets/player_original.png";
     }
   }
+  
+  // Update shield timer
+  if (shieldActive) {
+    shieldTimer -= 1 / 60;
+    if (shieldTimer <= 0) {
+      shieldActive = false;
+    }
+  }
 
-  itemSpeed += fallAcceleration;
+  // Increase speed with reduced acceleration after speed 10
+  var currentAcceleration = itemSpeed >= 10 ? fallAcceleration * 0.5 : fallAcceleration;
+  itemSpeed += currentAcceleration;
   if (itemSpeed > maxFallSpeed) {
     itemSpeed = maxFallSpeed;
   }
