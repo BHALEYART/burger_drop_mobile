@@ -655,7 +655,7 @@ function checkCollision() {
       
       // Trigger flash effect and spawn delay
       nukeFlash = 1.0;
-      spawnDelay = 1.0;  // 1 seconds delay
+      spawnDelay = 0.3;  // 1 seconds delay
       
       nukeItems.splice(i, 1);
     }
@@ -760,9 +760,9 @@ function resetItems() {
       var clockChance = currentChance;
     }
     
-    // Nuke - increased rate after speed 16
+    // Nuke - increased rate after speed 20
     if (canSpawnNuke) {
-      var nukeRate = itemSpeed >= 16 ? 0.006 : 0.003;  // Double rate at 16+ (0.6% vs 0.3%)
+      var nukeRate = itemSpeed >= 20 ? 0.009 : 0.06;  // Double rate at 20+ (0.6% vs 0.3%)
       currentChance += nukeRate;
       var nukeChance = currentChance;
     }
@@ -1021,7 +1021,7 @@ function update() {
 
   // Draw shield line effect (80 pixels above player)
   if (shieldActive) {
-    var shieldY = playerY - 160;
+    var shieldY = playerY - 300;
     ctx.strokeStyle = "cyan";
     ctx.lineWidth = 4;
     ctx.shadowColor = "cyan";
@@ -1051,7 +1051,7 @@ function update() {
   
   // Draw fire line effect (80 pixels above player) - Auto-collects burgers only
   if (fireActive) {
-    var fireY = playerY - 180;
+    var fireY = playerY - 380;
     ctx.strokeStyle = "red";
     ctx.lineWidth = 4;
     ctx.shadowColor = "red";
@@ -1081,7 +1081,7 @@ function update() {
   
   // Draw combo line effect (80 pixels above player) - GREEN combines Shield + Fire
   if (comboActive) {
-    var comboY = playerY - 170;
+    var comboY = playerY - 340;
     ctx.strokeStyle = "lime";  // Bright green
     ctx.lineWidth = 5;  // Slightly thicker than others
     ctx.shadowColor = "lime";
