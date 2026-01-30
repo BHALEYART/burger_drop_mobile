@@ -49,6 +49,8 @@ var medicalItems = [];
 var shieldItems = [];  // New shield item array
 var clockItems = [];   // New clock item array
 var nukeItems = [];    // New nuke item array
+var fireItems = [];    // New fire item array
+var fireItems = [];    // New fire item array
 var maxItems = 8;
 var itemSpeed = 2;
 var maxFallSpeed = 24;  // Changed from 25 to 24
@@ -77,6 +79,16 @@ var clockItemWidth = 40;
 var clockItemHeight = 40;
 var nukeItemWidth = 40;
 var nukeItemHeight = 40;
+var fireActive = false;  // New fire power-up
+var fireDuration = 10;
+var fireTimer = 0;
+var fireItemWidth = 40;
+var fireItemHeight = 40;
+var fireActive = false;
+var fireDuration = 10;
+var fireTimer = 0;
+var fireItemWidth = 40;
+var fireItemHeight = 40;
 
 // Device detection
 var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -603,7 +615,7 @@ function checkCollision() {
       playerY + hitboxMargin < clockItem.y + clockItemHeight - hitboxMargin &&
       playerY + playerHeight - hitboxMargin > clockItem.y + hitboxMargin
     ) {
-      itemSpeed = 14;  // Slow down to speed 14
+      itemSpeed = Math.max(2, itemSpeed - 3);  // Reduce speed by 3, minimum 2
       score += 100;
       safePlayAudio(goodItemSound);
       clockItems.splice(i, 1);
@@ -631,55 +643,85 @@ function checkCollision() {
       medicalItems = [];
       shieldItems = [];
       clockItems = [];
-      // Reset speed to 10
-      itemSpeed = 10;
+      // Reduce speed by 5, minimum 2
+      itemSpeed = Math.max(2, itemSpeed - 5);
       score += 200;  // Bonus for using nuke
       safePlayAudio(goodItemSound);
       nukeItems.splice(i, 1);
+    }
+  }
+  
+  // Fire item collision
+  for (var i = 0; i < fireItems.length; i++) {
+    var fireItem = fireItems[i];
+    if (
+      playerX + hitboxMargin < fireItem.x + fireItemWidth - hitboxMargin &&
+      playerX + playerWidth - hitboxMargin > fireItem.x + hitboxMargin &&
+      playerY + hitboxMargin < fireItem.y + fireItemHeight - hitboxMargin &&
+      playerY + playerHeight - hitboxMargin > fireItem.y + hitboxMargin
+    ) {
+      fireActive = true;
+      fireTimer = fireDuration;
+      score += 100;
+      safePlayAudio(goodItemSound);
+      fireItems.splice(i, 1);
     }
   }
 }
 
 // Reset item position and speed
 function resetItems() {
-  if (goodItems.length + badItems.length + surpriseItems.length + shieldItems.length + clockItems.length + nukeItems.length < maxItems) {
+  if (goodItems.length + badItems.length + surpriseItems.length + shieldItems.length + clockItems.length + nukeItems.length + fireItems.length < maxItems) {
     var randomNum = Math.random();
     var spawnableWidth = GAME_WIDTH - SCREEN_MARGIN_LEFT - SCREEN_MARGIN_RIGHT;
+    
+    // When shield or immunity is active, ONLY spawn burgers and bad items
+    var powerUpActive = shieldActive || isPlayerImmune;
     
     // Base spawn rates - adjusted based on speed
     var burgerChance = 0.85;       // 85% burgers
     var trashChance = 0.975;       // 12.5% trash
     var currentChance = trashChance;
     
-    // Speed-based item availability
-    var canSpawnImmunity = itemSpeed < 20;           // Immunity disappears at speed 20+
-    var canSpawnShield = itemSpeed >= 10;            // Shield appears at speed 10+
-    var canSpawnClock = itemSpeed >= 18;             // Clock appears at speed 18+
-    var canSpawnNuke = itemSpeed >= 20;              // Nuke appears at speed 20+
+    // Speed-based item availability (disabled if power-up is active)
+    var canSpawnImmunity = itemSpeed < 20 && !powerUpActive;           // Immunity disappears at speed 20+ OR when power-up active
+    var canSpawnShield = itemSpeed >= 10 && !powerUpActive;            // Shield appears at speed 10+ AND no power-up active
+    var canSpawnFire = itemSpeed >= 10 && !powerUpActive;              // Fire appears at speed 10+ AND no power-up active
+    var canSpawnMedical = !powerUpActive;                              // Medical disabled when power-up active
+    var canSpawnClock = itemSpeed >= 18 && !powerUpActive;             // Clock appears at speed 18+ AND no power-up active
+    var canSpawnNuke = itemSpeed >= 20 && !powerUpActive;              // Nuke appears at speed 20+ AND no power-up active
     
-    // Immunity (1.0%) - only before speed 20
+    // Immunity (1.0%) - only before speed 20 and no power-up active
     if (canSpawnImmunity) {
       currentChance += 0.01;  // 0.975 + 0.01 = 0.985
       var immunityChance = currentChance;
     }
     
-    // Shield (1.0%) - only at speed 10+
+    // Shield (0.5%) - only at speed 10+ and no power-up active
     if (canSpawnShield) {
-      currentChance += 0.01;  // Add 0.01
+      currentChance += 0.005;  // Add 0.005
       var shieldChance = currentChance;
     }
     
-    // Medical (0.35%) - always available
-    currentChance += 0.0035;
-    var medicalChance = currentChance;
+    // Fire (0.5%) - only at speed 10+ and no power-up active
+    if (canSpawnFire) {
+      currentChance += 0.005;  // Add 0.005
+      var fireChance = currentChance;
+    }
     
-    // Clock (0.35%) - only at speed 18+
+    // Medical (0.35%) - only when no power-up active
+    if (canSpawnMedical) {
+      currentChance += 0.0035;
+      var medicalChance = currentChance;
+    }
+    
+    // Clock (0.35%) - only at speed 18+ and no power-up active
     if (canSpawnClock) {
       currentChance += 0.0035;
       var clockChance = currentChance;
     }
     
-    // Nuke (0.15%) - only at speed 20+
+    // Nuke (0.15%) - only at speed 20+ and no power-up active
     if (canSpawnNuke) {
       currentChance += 0.0015;
       var nukeChance = currentChance;
@@ -714,7 +756,14 @@ function resetItems() {
         speed: itemSpeed
       };
       shieldItems.push(shieldItem);
-    } else if (randomNum < medicalChance) {
+    } else if (canSpawnFire && randomNum < fireChance) {
+      var fireItem = {
+        x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - fireItemWidth),
+        y: -fireItemHeight,
+        speed: itemSpeed
+      };
+      fireItems.push(fireItem);
+    } else if (canSpawnMedical && randomNum < medicalChance) {
       var medicalItem = {
         x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - medicalItemWidth),
         y: -medicalItemHeight,
@@ -796,111 +845,117 @@ function update() {
     );
   }
 
+  // Draw good items (Burger Emoji 🍔)
   for (var i = 0; i < goodItems.length; i++) {
     var goodItem = goodItems[i];
-    ctx.drawImage(
-      goodItemImage,
-      goodItem.x,
-      goodItem.y,
-      goodItemWidth,
-      goodItemHeight
-    );
+    ctx.font = goodItemWidth + "px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("🍔", goodItem.x + goodItemWidth/2, goodItem.y + goodItemHeight/2);
     goodItem.y += goodItem.speed;
     if (goodItem.y > GAME_HEIGHT) {
       goodItems.splice(i, 1);
     }
   }
 
+  // Draw bad items (Bomb Emoji 💣)
   for (var i = 0; i < badItems.length; i++) {
     var badItem = badItems[i];
-    ctx.drawImage(
-      badItemImage,
-      badItem.x,
-      badItem.y,
-      badItemWidth,
-      badItemHeight
-    );
+    ctx.font = badItemWidth + "px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("💣", badItem.x + badItemWidth/2, badItem.y + badItemHeight/2);
     badItem.y += badItem.speed;
     if (badItem.y > GAME_HEIGHT) {
       badItems.splice(i, 1);
     }
   }
 
+  // Draw surprise items (DNA Emoji 🧬)
   for (var i = 0; i < surpriseItems.length; i++) {
     var surpriseItem = surpriseItems[i];
-    ctx.drawImage(
-      surpriseItemImage,
-      surpriseItem.x,
-      surpriseItem.y,
-      surpriseItemWidth,
-      surpriseItemHeight
-    );
+    ctx.font = surpriseItemWidth + "px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("🧬", surpriseItem.x + surpriseItemWidth/2, surpriseItem.y + surpriseItemHeight/2);
     surpriseItem.y += surpriseItem.speed;
     if (surpriseItem.y > GAME_HEIGHT) {
       surpriseItems.splice(i, 1);
     }
   }
 
+  // Draw medical items (Medical Helmet Emoji ⛑️)
   for (var i = 0; i < medicalItems.length; i++) {
     var medicalItem = medicalItems[i];
-    ctx.drawImage(
-      medicalItemImage,
-      medicalItem.x,
-      medicalItem.y,
-      medicalItemWidth,
-      medicalItemHeight
-    );
+    ctx.font = medicalItemWidth + "px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("⛑️", medicalItem.x + medicalItemWidth/2, medicalItem.y + medicalItemHeight/2);
     medicalItem.y += medicalItem.speed;
     if (medicalItem.y > GAME_HEIGHT) {
       medicalItems.splice(i, 1);
     }
   }
 
-  // Draw shield items (blue placeholder squares)
+  // Draw shield items (Shield Emoji 🛡️)
   for (var i = 0; i < shieldItems.length; i++) {
     var shieldItem = shieldItems[i];
-    ctx.fillStyle = "blue";
-    ctx.fillRect(shieldItem.x, shieldItem.y, shieldItemWidth, shieldItemHeight);
-    ctx.strokeStyle = "white";
-    ctx.lineWidth = 2;
-    ctx.strokeRect(shieldItem.x, shieldItem.y, shieldItemWidth, shieldItemHeight);
+    ctx.font = shieldItemWidth + "px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("🛡️", shieldItem.x + shieldItemWidth/2, shieldItem.y + shieldItemHeight/2);
     shieldItem.y += shieldItem.speed;
     if (shieldItem.y > GAME_HEIGHT) {
       shieldItems.splice(i, 1);
     }
   }
 
-  // Draw clock items (cyan placeholder squares)
+  // Draw clock items (Stopwatch Emoji ⏱️)
   for (var i = 0; i < clockItems.length; i++) {
     var clockItem = clockItems[i];
-    ctx.fillStyle = "cyan";
-    ctx.fillRect(clockItem.x, clockItem.y, clockItemWidth, clockItemHeight);
-    ctx.strokeStyle = "white";
-    ctx.lineWidth = 2;
-    ctx.strokeRect(clockItem.x, clockItem.y, clockItemWidth, clockItemHeight);
+    ctx.font = clockItemWidth + "px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("⏱️", clockItem.x + clockItemWidth/2, clockItem.y + clockItemHeight/2);
     clockItem.y += clockItem.speed;
     if (clockItem.y > GAME_HEIGHT) {
       clockItems.splice(i, 1);
     }
   }
 
-  // Draw nuke items (orange/red placeholder squares)
+  // Draw nuke items (Mind Blown Emoji 🤯)
   for (var i = 0; i < nukeItems.length; i++) {
     var nukeItem = nukeItems[i];
-    ctx.fillStyle = "#FF4500";  // Orange-red
-    ctx.fillRect(nukeItem.x, nukeItem.y, nukeItemWidth, nukeItemHeight);
-    ctx.strokeStyle = "yellow";
-    ctx.lineWidth = 2;
-    ctx.strokeRect(nukeItem.x, nukeItem.y, nukeItemWidth, nukeItemHeight);
+    ctx.font = nukeItemWidth + "px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("🤯", nukeItem.x + nukeItemWidth/2, nukeItem.y + nukeItemHeight/2);
     nukeItem.y += nukeItem.speed;
     if (nukeItem.y > GAME_HEIGHT) {
       nukeItems.splice(i, 1);
     }
   }
 
-  // Draw shield line effect (40 pixels above player)
+  // Draw fire items (Fire Emoji 🔥)
+  for (var i = 0; i < fireItems.length; i++) {
+    var fireItem = fireItems[i];
+    ctx.font = fireItemWidth + "px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("🔥", fireItem.x + fireItemWidth/2, fireItem.y + fireItemHeight/2);
+    fireItem.y += fireItem.speed;
+    if (fireItem.y > GAME_HEIGHT) {
+      fireItems.splice(i, 1);
+    }
+  }
+  
+  // Reset text alignment
+  ctx.textAlign = "left";
+  ctx.textBaseline = "alphabetic";
+
+  // Draw shield line effect (80 pixels above player)
   if (shieldActive) {
-    var shieldY = playerY - 40;
+    var shieldY = playerY - 80;
     ctx.strokeStyle = "cyan";
     ctx.lineWidth = 4;
     ctx.shadowColor = "cyan";
@@ -924,6 +979,36 @@ function update() {
       var goodItem = goodItems[i];
       if (goodItem.y + goodItemHeight >= shieldY && goodItem.y <= shieldY + 4 && !goodItem.shieldTripled) {
         goodItem.shieldTripled = true;  // Mark as tripled
+      }
+    }
+  }
+  
+  // Draw fire line effect (80 pixels above player) - Auto-collects burgers only
+  if (fireActive) {
+    var fireY = playerY - 80;
+    ctx.strokeStyle = "red";
+    ctx.lineWidth = 4;
+    ctx.shadowColor = "red";
+    ctx.shadowBlur = 10;
+    ctx.beginPath();
+    ctx.moveTo(0, fireY);
+    ctx.lineTo(GAME_WIDTH, fireY);
+    ctx.stroke();
+    ctx.shadowBlur = 0;  // Reset shadow
+    
+    // Auto-collect burgers passing through fire line
+    for (var i = goodItems.length - 1; i >= 0; i--) {
+      var goodItem = goodItems[i];
+      if (goodItem.y + goodItemHeight >= fireY && goodItem.y <= fireY + 4) {
+        // Award points for burger
+        var pointMultiplier = itemSpeed >= maxFallSpeed ? 25 : 10;
+        var points = pointMultiplier * itemSpeed;
+        if (goodItem.shieldTripled) {
+          points *= 3;  // Still honor shield tripling if both active
+        }
+        score += points;
+        safePlayAudio(goodItemSound);
+        goodItems.splice(i, 1);  // Remove burger (auto-collected)
       }
     }
   }
@@ -974,6 +1059,16 @@ function update() {
     ctx.lineWidth = 3;
     ctx.strokeText("SHIELD: " + Math.floor(shieldTimer) + "s", 10, 210);
     ctx.fillText("SHIELD: " + Math.floor(shieldTimer) + "s", 10, 210);
+  }
+  
+  // Draw fire timer
+  if (fireActive) {
+    ctx.font = "bold 26px 'Arial Black', Arial, sans-serif";
+    ctx.fillStyle = "orange";
+    ctx.strokeStyle = "black";
+    ctx.lineWidth = 3;
+    ctx.strokeText("FIRE: " + Math.floor(fireTimer) + "s", 10, 240);
+    ctx.fillText("FIRE: " + Math.floor(fireTimer) + "s", 10, 240);
   }
 
   // Show control mode indicator only on mobile
@@ -1059,6 +1154,14 @@ function update() {
     shieldTimer -= 1 / 60;
     if (shieldTimer <= 0) {
       shieldActive = false;
+    }
+  }
+  
+  // Update fire timer
+  if (fireActive) {
+    fireTimer -= 1 / 60;
+    if (fireTimer <= 0) {
+      fireActive = false;
     }
   }
 
