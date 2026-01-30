@@ -50,6 +50,7 @@ var shieldItems = [];  // New shield item array
 var clockItems = [];   // New clock item array
 var nukeItems = [];    // New nuke item array
 var fireItems = [];    // New fire item array
+var comboItems = [];   // New combo item array (shield + fire)
 var fireItems = [];    // New fire item array
 var maxItems = 8;
 var itemSpeed = 2;
@@ -89,6 +90,11 @@ var fireDuration = 10;
 var fireTimer = 0;
 var fireItemWidth = 40;
 var fireItemHeight = 40;
+var comboActive = false;  // Combo power (shield + fire combined)
+var comboDuration = 10;
+var comboTimer = 0;
+var comboItemWidth = 40;
+var comboItemHeight = 40;
 var nukeFlash = 0;  // Nuke flash effect
 var nukeFlashDecay = 0.08;  // Faster fade than damage flash
 var spawnDelay = 0;  // Delay for spawning items after nuke
@@ -676,6 +682,23 @@ function checkCollision() {
       fireItems.splice(i, 1);
     }
   }
+  
+  // Combo item collision (Shield + Fire combined)
+  for (var i = 0; i < comboItems.length; i++) {
+    var comboItem = comboItems[i];
+    if (
+      playerX + hitboxMargin < comboItem.x + comboItemWidth - hitboxMargin &&
+      playerX + playerWidth - hitboxMargin > comboItem.x + hitboxMargin &&
+      playerY + hitboxMargin < comboItem.y + comboItemHeight - hitboxMargin &&
+      playerY + playerHeight - hitboxMargin > comboItem.y + hitboxMargin
+    ) {
+      comboActive = true;
+      comboTimer = comboDuration;
+      score += 200;  // Higher bonus for combo
+      safePlayAudio(goodItemSound);
+      comboItems.splice(i, 1);
+    }
+  }
 }
 
 // Reset item position and speed
@@ -686,25 +709,30 @@ function resetItems() {
     return;  // Don't spawn anything during delay
   }
   
-  if (goodItems.length + badItems.length + surpriseItems.length + shieldItems.length + clockItems.length + nukeItems.length + fireItems.length < maxItems) {
+  if (goodItems.length + badItems.length + surpriseItems.length + shieldItems.length + clockItems.length + nukeItems.length + fireItems.length + comboItems.length < maxItems) {
     var randomNum = Math.random();
     var spawnableWidth = GAME_WIDTH - SCREEN_MARGIN_LEFT - SCREEN_MARGIN_RIGHT;
     
-    // When shield or immunity is active, ONLY spawn burgers and bad items
+    // When shield, immunity, or COMBO is active, restrict spawning
+    // Combo only allows burgers, bombs, and medical kits
     var powerUpActive = shieldActive || isPlayerImmune;
+    var comboRestriction = comboActive;  // Combo has different restriction
     
     // Base spawn rates - adjusted based on speed
     var burgerChance = 0.85;       // 85% burgers
     var trashChance = 0.975;       // 12.5% trash
     var currentChance = trashChance;
     
-    // Speed-based item availability (disabled if power-up is active)
-    var canSpawnImmunity = itemSpeed >= 10 && itemSpeed < 20 && !powerUpActive;  // Immunity appears at speed 10-19 AND no power-up active
-    var canSpawnShield = itemSpeed >= 10 && !powerUpActive;            // Shield appears at speed 10+ AND no power-up active
-    var canSpawnFire = itemSpeed >= 10 && !powerUpActive;              // Fire appears at speed 10+ AND no power-up active
-    var canSpawnMedical = !powerUpActive;                              // Medical disabled when power-up active
-    var canSpawnClock = itemSpeed >= 12 && !powerUpActive;             // Clock appears at speed 12+ AND no power-up active
-    var canSpawnNuke = itemSpeed >= 20 && !powerUpActive;              // Nuke appears at speed 20+ AND no power-up active
+    // Speed-based item availability
+    // When combo is active: Only medical kits allowed (no other power-ups)
+    // When other power-ups active: No power-ups at all
+    var canSpawnImmunity = itemSpeed >= 10 && itemSpeed < 20 && !powerUpActive && !comboRestriction;
+    var canSpawnShield = itemSpeed >= 10 && !powerUpActive && !comboRestriction;
+    var canSpawnFire = itemSpeed >= 10 && !powerUpActive && !comboRestriction;
+    var canSpawnMedical = !powerUpActive;  // Medical allowed even with combo
+    var canSpawnClock = itemSpeed >= 12 && !powerUpActive && !comboRestriction;
+    var canSpawnNuke = itemSpeed >= 16 && !powerUpActive && !comboRestriction;
+    var canSpawnCombo = itemSpeed >= 18 && !powerUpActive && !comboRestriction;  // Combo at speed 18+
     
     // Immunity (1.0%) - only before speed 20 and no power-up active
     if (canSpawnImmunity) {
@@ -730,16 +758,24 @@ function resetItems() {
       var medicalChance = currentChance;
     }
     
-    // Clock (0.35%) - only at speed 18+ and no power-up active
+    // Clock - increased rate after speed 16
     if (canSpawnClock) {
-      currentChance += 0.0035;
+      var clockRate = itemSpeed >= 16 ? 0.007 : 0.0035;  // Double rate at 16+ (0.7% vs 0.35%)
+      currentChance += clockRate;
       var clockChance = currentChance;
     }
     
-    // Nuke (0.15%) - only at speed 20+ and no power-up active
+    // Nuke - increased rate after speed 16
     if (canSpawnNuke) {
-      currentChance += 0.0015;
+      var nukeRate = itemSpeed >= 16 ? 0.006 : 0.003;  // Double rate at 16+ (0.6% vs 0.3%)
+      currentChance += nukeRate;
       var nukeChance = currentChance;
+    }
+    
+    // Combo (0.4%) - rare ultimate power at speed 18+
+    if (canSpawnCombo) {
+      currentChance += 0.004;
+      var comboChance = currentChance;
     }
     
     // Spawn items based on calculated chances
@@ -799,6 +835,13 @@ function resetItems() {
         speed: itemSpeed
       };
       nukeItems.push(nukeItem);
+    } else if (canSpawnCombo && randomNum < comboChance) {
+      var comboItem = {
+        x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - comboItemWidth),
+        y: -comboItemHeight,
+        speed: itemSpeed
+      };
+      comboItems.push(comboItem);
     }
   }
 }
@@ -963,6 +1006,19 @@ function update() {
       fireItems.splice(i, 1);
     }
   }
+
+  // Draw combo items (Green Star Emoji ⭐ with green tint effect)
+  for (var i = 0; i < comboItems.length; i++) {
+    var comboItem = comboItems[i];
+    ctx.font = comboItemWidth + "px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("⭐", comboItem.x + comboItemWidth/2, comboItem.y + comboItemHeight/2);
+    comboItem.y += comboItem.speed;
+    if (comboItem.y > GAME_HEIGHT) {
+      comboItems.splice(i, 1);
+    }
+  }
   
   // Reset text alignment
   ctx.textAlign = "left";
@@ -1027,6 +1083,41 @@ function update() {
       }
     }
   }
+  
+  // Draw combo line effect (80 pixels above player) - GREEN combines Shield + Fire
+  if (comboActive) {
+    var comboY = playerY - 80;
+    ctx.strokeStyle = "lime";  // Bright green
+    ctx.lineWidth = 5;  // Slightly thicker than others
+    ctx.shadowColor = "lime";
+    ctx.shadowBlur = 15;  // More glow
+    ctx.beginPath();
+    ctx.moveTo(0, comboY);
+    ctx.lineTo(GAME_WIDTH, comboY);
+    ctx.stroke();
+    ctx.shadowBlur = 0;  // Reset shadow
+    
+    // Destroy bad items (like shield)
+    for (var i = badItems.length - 1; i >= 0; i--) {
+      var badItem = badItems[i];
+      if (badItem.y + badItemHeight >= comboY && badItem.y <= comboY + 4) {
+        badItems.splice(i, 1);  // Destroy bad item silently
+      }
+    }
+    
+    // Auto-collect burgers with triple points (combines fire auto-collect + shield triple)
+    for (var i = goodItems.length - 1; i >= 0; i--) {
+      var goodItem = goodItems[i];
+      if (goodItem.y + goodItemHeight >= comboY && goodItem.y <= comboY + 4) {
+        // Award triple points for burger (combo power!)
+        var pointMultiplier = itemSpeed >= maxFallSpeed ? 25 : 10;
+        var points = (pointMultiplier * itemSpeed) * 3;  // Always triple!
+        score += points;
+        safePlayAudio(goodItemSound);
+        goodItems.splice(i, 1);  // Remove burger (auto-collected with triple points)
+      }
+    }
+  }
 
   checkCollision();
 
@@ -1084,6 +1175,16 @@ function update() {
     ctx.lineWidth = 3;
     ctx.strokeText("FIRE: " + Math.floor(fireTimer) + "s", 10, 240);
     ctx.fillText("FIRE: " + Math.floor(fireTimer) + "s", 10, 240);
+  }
+  
+  // Draw combo timer
+  if (comboActive) {
+    ctx.font = "bold 28px 'Arial Black', Arial, sans-serif";
+    ctx.fillStyle = "lime";  // Bright green
+    ctx.strokeStyle = "black";
+    ctx.lineWidth = 4;  // Thicker outline for emphasis
+    ctx.strokeText("⭐ COMBO: " + Math.floor(comboTimer) + "s ⭐", 10, 270);
+    ctx.fillText("⭐ COMBO: " + Math.floor(comboTimer) + "s ⭐", 10, 270);
   }
 
   // Show control mode indicator only on mobile
@@ -1187,6 +1288,14 @@ function update() {
     fireTimer -= 1 / 60;
     if (fireTimer <= 0) {
       fireActive = false;
+    }
+  }
+  
+  // Update combo timer
+  if (comboActive) {
+    comboTimer -= 1 / 60;
+    if (comboTimer <= 0) {
+      comboActive = false;
     }
   }
 
