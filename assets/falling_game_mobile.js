@@ -646,15 +646,46 @@ function resetItems() {
     var randomNum = Math.random();
     var spawnableWidth = GAME_WIDTH - SCREEN_MARGIN_LEFT - SCREEN_MARGIN_RIGHT;
     
-    // Spawn rates
+    // Base spawn rates - adjusted based on speed
     var burgerChance = 0.85;       // 85% burgers
     var trashChance = 0.975;       // 12.5% trash
-    var surpriseChance = 0.985;    // 1.0% invincibility (same rarity)
-    var shieldChance = 0.995;      // 1.0% shield (same as invincibility)
-    var medicalChance = 0.9985;    // 0.35% medical
-    var clockChance = 0.99985;     // 0.35% clock (same as medical)
-    var nukeChance = 1.0;          // 0.15% nuke (rarer than invincibility)
+    var currentChance = trashChance;
     
+    // Speed-based item availability
+    var canSpawnImmunity = itemSpeed < 20;           // Immunity disappears at speed 20+
+    var canSpawnShield = itemSpeed >= 10;            // Shield appears at speed 10+
+    var canSpawnClock = itemSpeed >= 18;             // Clock appears at speed 18+
+    var canSpawnNuke = itemSpeed >= 20;              // Nuke appears at speed 20+
+    
+    // Immunity (1.0%) - only before speed 20
+    if (canSpawnImmunity) {
+      currentChance += 0.01;  // 0.975 + 0.01 = 0.985
+      var immunityChance = currentChance;
+    }
+    
+    // Shield (1.0%) - only at speed 10+
+    if (canSpawnShield) {
+      currentChance += 0.01;  // Add 0.01
+      var shieldChance = currentChance;
+    }
+    
+    // Medical (0.35%) - always available
+    currentChance += 0.0035;
+    var medicalChance = currentChance;
+    
+    // Clock (0.35%) - only at speed 18+
+    if (canSpawnClock) {
+      currentChance += 0.0035;
+      var clockChance = currentChance;
+    }
+    
+    // Nuke (0.15%) - only at speed 20+
+    if (canSpawnNuke) {
+      currentChance += 0.0015;
+      var nukeChance = currentChance;
+    }
+    
+    // Spawn items based on calculated chances
     if (randomNum < burgerChance) {
       var goodItem = {
         x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - goodItemWidth),
@@ -669,14 +700,14 @@ function resetItems() {
         speed: itemSpeed
       };
       badItems.push(badItem);
-    } else if (randomNum < surpriseChance) {
+    } else if (canSpawnImmunity && randomNum < immunityChance) {
       var surpriseItem = {
         x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - surpriseItemWidth),
         y: -surpriseItemHeight,
         speed: itemSpeed
       };
       surpriseItems.push(surpriseItem);
-    } else if (randomNum < shieldChance) {
+    } else if (canSpawnShield && randomNum < shieldChance) {
       var shieldItem = {
         x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - shieldItemWidth),
         y: -shieldItemHeight,
@@ -690,14 +721,14 @@ function resetItems() {
         speed: itemSpeed
       };
       medicalItems.push(medicalItem);
-    } else if (randomNum < clockChance) {
+    } else if (canSpawnClock && randomNum < clockChance) {
       var clockItem = {
         x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - clockItemWidth),
         y: -clockItemHeight,
         speed: itemSpeed
       };
       clockItems.push(clockItem);
-    } else if (randomNum < nukeChance) {
+    } else if (canSpawnNuke && randomNum < nukeChance) {
       var nukeItem = {
         x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - nukeItemWidth),
         y: -nukeItemHeight,
@@ -899,23 +930,23 @@ function update() {
 
   checkCollision();
 
-  // Draw score (moved down to accommodate title) - Updated font style
+  // Draw score with trophy emoji - Updated font style
   ctx.font = "bold 28px 'Arial Black', Arial, sans-serif";
   ctx.fillStyle = "orange";
   ctx.strokeStyle = "black";
   ctx.lineWidth = 3;
-  ctx.strokeText("SCORE: " + Math.floor(score), 10, 150);
-  ctx.fillText("SCORE: " + Math.floor(score), 10, 150);
+  ctx.strokeText("🏆 " + Math.floor(score), 10, 150);
+  ctx.fillText("🏆 " + Math.floor(score), 10, 150);
   if(score <= 0) {
     score = 0; 
   }
 
-  // Draw Speed - Updated font style and MAX indicator
+  // Draw Speed with lightning emoji - Updated font style and MAX indicator
   ctx.font = "bold 28px 'Arial Black', Arial, sans-serif";
   ctx.fillStyle = "yellow";
   ctx.strokeStyle = "black";
   ctx.lineWidth = 3;
-  var speedText = itemSpeed >= maxFallSpeed ? "SPEED: MAX" : "SPEED: " + Math.floor(itemSpeed) + "X";
+  var speedText = itemSpeed >= maxFallSpeed ? "⚡ MAX" : "⚡ " + Math.floor(itemSpeed);
   ctx.strokeText(speedText, 220, 150);
   ctx.fillText(speedText, 220, 150);
 
