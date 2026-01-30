@@ -27,12 +27,12 @@ var playerWidth = 70;
 var playerHeight = 106;
 var goodItemWidth = 40;
 var goodItemHeight = 40;
-var badItemWidth = 80;
-var badItemHeight = 80;
-var surpriseItemWidth = 30;
-var surpriseItemHeight = 50;
-var medicalItemWidth = 50;
-var medicalItemHeight = 50;
+var badItemWidth = 60;  // Reduced from 80 to 60
+var badItemHeight = 60;  // Reduced from 80 to 60
+var surpriseItemWidth = 40;  // Same as burger
+var surpriseItemHeight = 40;  // Same as burger
+var medicalItemWidth = 40;  // Same as burger (was 50)
+var medicalItemHeight = 40;  // Same as burger (was 50)
 var heartWidth = 30;
 var heartHeight = 30;
 // Screen margins for boundaries
@@ -89,6 +89,9 @@ var fireDuration = 10;
 var fireTimer = 0;
 var fireItemWidth = 40;
 var fireItemHeight = 40;
+var nukeFlash = 0;  // Nuke flash effect
+var nukeFlashDecay = 0.08;  // Faster fade than damage flash
+var spawnDelay = 0;  // Delay for spawning items after nuke
 
 // Device detection
 var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -643,10 +646,16 @@ function checkCollision() {
       medicalItems = [];
       shieldItems = [];
       clockItems = [];
+      fireItems = [];
       // Reduce speed by 5, minimum 2
       itemSpeed = Math.max(2, itemSpeed - 5);
       score += 200;  // Bonus for using nuke
       safePlayAudio(goodItemSound);
+      
+      // Trigger flash effect and spawn delay
+      nukeFlash = 1.0;
+      spawnDelay = 2.0;  // 2 seconds delay
+      
       nukeItems.splice(i, 1);
     }
   }
@@ -671,6 +680,12 @@ function checkCollision() {
 
 // Reset item position and speed
 function resetItems() {
+  // Check spawn delay (from nuke)
+  if (spawnDelay > 0) {
+    spawnDelay -= 1 / 60;  // Decrease by 1 frame at 60fps
+    return;  // Don't spawn anything during delay
+  }
+  
   if (goodItems.length + badItems.length + surpriseItems.length + shieldItems.length + clockItems.length + nukeItems.length + fireItems.length < maxItems) {
     var randomNum = Math.random();
     var spawnableWidth = GAME_WIDTH - SCREEN_MARGIN_LEFT - SCREEN_MARGIN_RIGHT;
@@ -684,11 +699,11 @@ function resetItems() {
     var currentChance = trashChance;
     
     // Speed-based item availability (disabled if power-up is active)
-    var canSpawnImmunity = itemSpeed < 20 && !powerUpActive;           // Immunity disappears at speed 20+ OR when power-up active
+    var canSpawnImmunity = itemSpeed >= 10 && itemSpeed < 20 && !powerUpActive;  // Immunity appears at speed 10-19 AND no power-up active
     var canSpawnShield = itemSpeed >= 10 && !powerUpActive;            // Shield appears at speed 10+ AND no power-up active
     var canSpawnFire = itemSpeed >= 10 && !powerUpActive;              // Fire appears at speed 10+ AND no power-up active
     var canSpawnMedical = !powerUpActive;                              // Medical disabled when power-up active
-    var canSpawnClock = itemSpeed >= 18 && !powerUpActive;             // Clock appears at speed 18+ AND no power-up active
+    var canSpawnClock = itemSpeed >= 12 && !powerUpActive;             // Clock appears at speed 12+ AND no power-up active
     var canSpawnNuke = itemSpeed >= 20 && !powerUpActive;              // Nuke appears at speed 20+ AND no power-up active
     
     // Immunity (1.0%) - only before speed 20 and no power-up active
@@ -871,13 +886,13 @@ function update() {
     }
   }
 
-  // Draw surprise items (DNA Emoji 🧬)
+  // Draw surprise items (Germ Emoji 🦠)
   for (var i = 0; i < surpriseItems.length; i++) {
     var surpriseItem = surpriseItems[i];
     ctx.font = surpriseItemWidth + "px Arial";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText("🧬", surpriseItem.x + surpriseItemWidth/2, surpriseItem.y + surpriseItemHeight/2);
+    ctx.fillText("🦠", surpriseItem.x + surpriseItemWidth/2, surpriseItem.y + surpriseItemHeight/2);
     surpriseItem.y += surpriseItem.speed;
     if (surpriseItem.y > GAME_HEIGHT) {
       surpriseItems.splice(i, 1);
@@ -910,26 +925,26 @@ function update() {
     }
   }
 
-  // Draw clock items (Stopwatch Emoji ⏱️)
+  // Draw clock items (Clock Emoji 🕐)
   for (var i = 0; i < clockItems.length; i++) {
     var clockItem = clockItems[i];
     ctx.font = clockItemWidth + "px Arial";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText("⏱️", clockItem.x + clockItemWidth/2, clockItem.y + clockItemHeight/2);
+    ctx.fillText("🕐", clockItem.x + clockItemWidth/2, clockItem.y + clockItemHeight/2);
     clockItem.y += clockItem.speed;
     if (clockItem.y > GAME_HEIGHT) {
       clockItems.splice(i, 1);
     }
   }
 
-  // Draw nuke items (Mind Blown Emoji 🤯)
+  // Draw nuke items (Fries Emoji 🍟)
   for (var i = 0; i < nukeItems.length; i++) {
     var nukeItem = nukeItems[i];
     ctx.font = nukeItemWidth + "px Arial";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText("🤯", nukeItem.x + nukeItemWidth/2, nukeItem.y + nukeItemHeight/2);
+    ctx.fillText("🍟", nukeItem.x + nukeItemWidth/2, nukeItem.y + nukeItemHeight/2);
     nukeItem.y += nukeItem.speed;
     if (nukeItem.y > GAME_HEIGHT) {
       nukeItems.splice(i, 1);
@@ -1105,6 +1120,16 @@ function update() {
     ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
     damageFlash -= damageFlashDecay;  // Fade out
     if (damageFlash < 0) damageFlash = 0;
+  }
+  
+  // Draw nuke flash effect (white and yellow faded overlay)
+  if (nukeFlash > 0) {
+    // Alternate between white and yellow for flickering effect
+    var flashColor = Math.floor(nukeFlash * 10) % 2 === 0 ? "rgba(255, 255, 255, " : "rgba(255, 255, 0, ";
+    ctx.fillStyle = flashColor + (nukeFlash * 0.5) + ")";  // White/yellow with transparency
+    ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+    nukeFlash -= nukeFlashDecay;  // Fade out faster than damage
+    if (nukeFlash < 0) nukeFlash = 0;
   }
 
   if (hearts <= 0) {
