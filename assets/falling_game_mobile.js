@@ -1205,7 +1205,7 @@ function update() {
 
   // Draw shield line effect (80 pixels above player)
   if (shieldActive) {
-    var shieldY = playerY - 80;
+    var shieldY = playerY - 375;
     ctx.strokeStyle = "cyan";
     ctx.lineWidth = 4;
     ctx.shadowColor = "cyan";
@@ -1235,7 +1235,7 @@ function update() {
   
   // Draw fire line effect (80 pixels above player) - Auto-collects burgers only
   if (fireActive) {
-    var fireY = playerY - 80;
+    var fireY = playerY - 380;
     ctx.strokeStyle = "red";
     ctx.lineWidth = 4;
     ctx.shadowColor = "red";
@@ -1265,7 +1265,7 @@ function update() {
   
   // Draw combo line effect (80 pixels above player) - GREEN combines Shield + Fire
   if (comboActive) {
-    var comboY = playerY - 80;
+    var comboY = playerY - 370;
     ctx.strokeStyle = "lime";  // Bright green
     ctx.lineWidth = 5;  // Slightly thicker than others
     ctx.shadowColor = "lime";
@@ -1402,8 +1402,8 @@ function update() {
   ctx.strokeStyle = "black";
   ctx.lineWidth = 2;
   ctx.textAlign = "center";
-  ctx.strokeText("Created by BHaleyArt", GAME_WIDTH / 2, GAME_HEIGHT - 10);
-  ctx.fillText("Created by BHaleyArt", GAME_WIDTH / 2, GAME_HEIGHT - 10);
+  ctx.strokeText("V6.8 Created by BHaleyArt", GAME_WIDTH / 2, GAME_HEIGHT - 10);
+  ctx.fillText("V6.8 Created by BHaleyArt", GAME_WIDTH / 2, GAME_HEIGHT - 10);
   ctx.textAlign = "left";
   
   // Draw damage flash effect (red screen overlay)
@@ -1432,7 +1432,7 @@ function update() {
     ctx.drawImage(
       gameOverImage,
       GAME_WIDTH / 2 - 150,
-      GAME_HEIGHT / 2 - 200,  // Raised from -150 to -200
+      GAME_HEIGHT / 2 - 240,  // Raised from -150 to -200
       300,
       300
     );
@@ -1446,7 +1446,7 @@ function update() {
     ctx.drawImage(
       gameOverPileImage,
       -70,
-      GAME_HEIGHT - 530,  // Raised from -480 to -530
+      GAME_HEIGHT - 500,  // Raised from -480 to -530
       600,
       600
     );
