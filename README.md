@@ -56,6 +56,42 @@ Burger Drop is an arcade-style catching game built with HTML5 Canvas and JavaScr
 
 **Speed:** Items fall faster as you play - stay alert!
 
+🤖 BOSS FIGHT SYSTEM - Complete Guide
+Boss Fight Overview
+Boss countdown starts when player reaches MAX speed (24) or Developer Mode is activated!
+10-second countdown before boss arrives!
+Boss: 🤖 Robot emoji (80×80px)
+Health: 5 bolts ⚡⚡⚡⚡⚡
+Position: 100px from top (~380px above player)
+Movement: Flies left-right across screen
+Boss Attacks
+
+Red laser beams shoot downward
+Beams every 1.5 seconds
+Must dodge while fighting!
+
+Gun Power-Up 🔫
+
+Spawns during boss fight (5%)
+Click/tap boss to shoot
+Each gun = 1 shot
+Boss loses 1 health per hit
+Earn 500 points per hit!
+
+Items During Boss
+✅ Burgers (80%)
+✅ Clock (15%)
+✅ Gun (5%)
+❌ All other power-ups disabled
+❌ No bombs
+Boss Defeat
+
+5 hits to defeat
+5,000 bonus points!
+Normal gameplay resumes
+
+Developer Mode
+Red button top-right: Toggle boss countdown anytime for testing!
 ---
 
 ## 🎯 Scoring System
