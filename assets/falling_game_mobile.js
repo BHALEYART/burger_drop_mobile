@@ -109,8 +109,8 @@ var bossY = -100;  // Start above screen
 var bossTargetY = 100;  // Float at 100px from top (about 380px above player at bottom)
 var bossWidth = 80;
 var bossHeight = 80;
-var bossHealth = 5;  // 5 bolts
-var bossMaxHealth = 5;
+var bossHealth = 3;  // 3 targets (reduced from 5 bolts)
+var bossMaxHealth = 3;
 var bossDirection = 1;  // 1 = right, -1 = left
 var bossSpeed = 2;
 var bossShootTimer = 0;
@@ -119,6 +119,9 @@ var bossBeams = [];  // Array of laser beams
 var bossAttackPhase = 1;  // 1 = side-to-side, 2 = wide laser, 3 = fast movement
 var bossPhaseTimer = 0;
 var bossPhaseDuration = 300;  // 5 seconds per phase (300 frames at 60fps)
+var bossStunned = false;  // Boss stun state
+var bossStunTimer = 0;  // Stun duration
+var bossStunDuration = 30;  // 0.5 seconds at 60fps
 var gunItems = [];  // Special gun power-up for boss fight
 var gunItemWidth = 40;
 var gunItemHeight = 40;
@@ -740,6 +743,10 @@ function checkCollision() {
         bossHealth--;
         score += 500;  // Bonus for hitting boss
         safePlayAudio(badItemSound);  // Hit sound
+        
+        // Stun boss briefly
+        bossStunned = true;
+        bossStunTimer = bossStunDuration;
       }
       gunItems.splice(i, 1);
     }
@@ -1112,16 +1119,34 @@ function update() {
   
   // Draw boss (Robot Emoji 🤖)
   if (bossActive && bossHealth > 0) {
+    // Add stun flash effect
+    if (bossStunned && Math.floor(bossStunTimer / 5) % 2 === 0) {
+      // Flash white when stunned
+      ctx.shadowColor = "white";
+      ctx.shadowBlur = 20;
+    }
+    
     ctx.font = bossWidth + "px Arial";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText("🤖", bossX + bossWidth/2, bossY + bossHeight/2);
+    ctx.shadowBlur = 0;  // Reset shadow
     
-    // Draw boss health bar (5 bolts)
+    // Draw boss health bar (target emojis with label)
+    ctx.font = "bold 24px 'Arial Black', Arial, sans-serif";
+    ctx.fillStyle = "white";
+    ctx.strokeStyle = "black";
+    ctx.lineWidth = 3;
+    ctx.textAlign = "left";
+    ctx.strokeText("BOSS:", 10, 50);
+    ctx.fillText("BOSS:", 10, 50);
+    
+    // Draw target emojis for health
+    ctx.font = "30px Arial";
     for (var i = 0; i < bossHealth; i++) {
-      ctx.font = "30px Arial";
-      ctx.fillText("⚡", 10 + (i * 35), 50);
+      ctx.fillText("🎯", 90 + (i * 40), 50);
     }
+    ctx.textAlign = "center";  // Reset for boss rendering
   }
   
   // Draw boss beams
@@ -1356,8 +1381,8 @@ function update() {
   ctx.strokeStyle = "black";
   ctx.lineWidth = 2;
   ctx.textAlign = "center";
-  ctx.strokeText("V6 Created by BHaleyArt", GAME_WIDTH / 2, GAME_HEIGHT - 10);
-  ctx.fillText("V6 Created by BHaleyArt", GAME_WIDTH / 2, GAME_HEIGHT - 10);
+  ctx.strokeText("V6.3 Created by BHaleyArt", GAME_WIDTH / 2, GAME_HEIGHT - 10);
+  ctx.fillText("V6.3 Created by BHaleyArt", GAME_WIDTH / 2, GAME_HEIGHT - 10);
   ctx.textAlign = "left";
   
   // Draw damage flash effect (red screen overlay)
@@ -1464,6 +1489,10 @@ function update() {
       bossActive = true;
       bossY = -100;  // Reset position above screen
       bossHealth = bossMaxHealth;
+      bossAttackPhase = 1;  // Reset to phase 1
+      bossPhaseTimer = 0;
+      bossStunned = false;
+      bossStunTimer = 0;
       hasGun = false;
       // Clear all existing items except clock
       goodItems = [];
@@ -1483,6 +1512,16 @@ function update() {
     if (bossY < bossTargetY) {
       bossY += 2;  // Descend speed
     } else {
+      // Update stun timer
+      if (bossStunned) {
+        bossStunTimer--;
+        if (bossStunTimer <= 0) {
+          bossStunned = false;
+        }
+        // Boss doesn't move or attack while stunned
+        return;
+      }
+      
       // Update phase timer and cycle through phases
       bossPhaseTimer++;
       if (bossPhaseTimer >= bossPhaseDuration) {
@@ -1521,7 +1560,7 @@ function update() {
         }
       }
       
-      // PHASE 2: Wide laser from sides (right then left)
+      // PHASE 2: Wide laser blasts downward from sides
       else if (bossAttackPhase === 2) {
         bossShootTimer++;
         
@@ -1531,14 +1570,13 @@ function update() {
           // First half: Right side
           bossX = GAME_WIDTH - bossWidth - 10;
           if (bossShootTimer === 30 || bossShootTimer === 90 || bossShootTimer === 150) {
-            // Wide laser from right
+            // Wide downward laser from right side
             var beam = {
-              x: 0,
-              y: bossY + bossHeight / 2 - 15,
-              width: GAME_WIDTH,
-              height: 30,
-              growing: false,
-              duration: 60,
+              x: bossX + bossWidth / 2 - 60,  // Wide beam centered on boss
+              y: bossY + bossHeight,
+              width: 120,  // Wide beam
+              height: 0,
+              growing: true,
               type: 'wide'
             };
             bossBeams.push(beam);
@@ -1547,14 +1585,13 @@ function update() {
           // Second half: Left side
           bossX = 10;
           if (bossShootTimer === 180 || bossShootTimer === 240) {
-            // Wide laser from left
+            // Wide downward laser from left side
             var beam = {
-              x: 0,
-              y: bossY + bossHeight / 2 - 15,
-              width: GAME_WIDTH,
-              height: 30,
-              growing: false,
-              duration: 60,
+              x: bossX + bossWidth / 2 - 60,  // Wide beam centered on boss
+              y: bossY + bossHeight,
+              width: 120,  // Wide beam
+              height: 0,
+              growing: true,
               type: 'wide'
             };
             bossBeams.push(beam);
@@ -1596,8 +1633,8 @@ function update() {
     for (var i = bossBeams.length - 1; i >= 0; i--) {
       var beam = bossBeams[i];
       
-      if (beam.type === 'narrow') {
-        // Narrow beam logic
+      if (beam.type === 'narrow' || beam.type === 'wide') {
+        // Both narrow and wide beams grow downward
         if (beam.growing) {
           beam.height += 15;
           if (beam.y + beam.height >= GAME_HEIGHT) {
@@ -1609,13 +1646,6 @@ function update() {
             bossBeams.splice(i, 1);
             continue;
           }
-        }
-      } else if (beam.type === 'wide') {
-        // Wide beam logic
-        beam.duration--;
-        if (beam.duration <= 0) {
-          bossBeams.splice(i, 1);
-          continue;
         }
       }
       
@@ -1675,7 +1705,7 @@ restartButton.addEventListener("click", function () {
 
 // Add click event listener to URL button
 watchButton.addEventListener("click", function() {
-  window.location.href = ("https://bombpop.link/bigheadbillions");
+  window.location.href = ("https://youtube.com/@bhaleyart");
 });
 
 // Handle mouse movement (PC)
