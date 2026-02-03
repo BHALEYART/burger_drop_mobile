@@ -116,6 +116,9 @@ var bossSpeed = 2;
 var bossShootTimer = 0;
 var bossShootInterval = 90;  // Shoot every 90 frames (~1.5 seconds at 60fps)
 var bossBeams = [];  // Array of laser beams
+var bossAttackPhase = 1;  // 1 = side-to-side, 2 = wide laser, 3 = fast movement
+var bossPhaseTimer = 0;
+var bossPhaseDuration = 300;  // 5 seconds per phase (300 frames at 60fps)
 var gunItems = [];  // Special gun power-up for boss fight
 var gunItemWidth = 40;
 var gunItemHeight = 40;
@@ -732,8 +735,12 @@ function checkCollision() {
       playerY + hitboxMargin < gunItem.y + gunItemHeight - hitboxMargin &&
       playerY + playerHeight - hitboxMargin > gunItem.y + hitboxMargin
     ) {
-      hasGun = true;
-      safePlayAudio(goodItemSound);
+      // Automatically damage boss when gun collected
+      if (bossActive && bossHealth > 0) {
+        bossHealth--;
+        score += 500;  // Bonus for hitting boss
+        safePlayAudio(badItemSound);  // Hit sound
+      }
       gunItems.splice(i, 1);
     }
   }
@@ -753,29 +760,27 @@ function resetItems() {
       var randomNum = Math.random();
       var spawnableWidth = GAME_WIDTH - SCREEN_MARGIN_LEFT - SCREEN_MARGIN_RIGHT;
       
-      if (randomNum < 0.80) {  // 80% burgers
+      if (randomNum < 0.85) {  // 85% burgers
         var goodItem = {
           x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - goodItemWidth),
           y: -goodItemHeight,
           speed: itemSpeed
         };
         goodItems.push(goodItem);
-      } else if (randomNum < 0.95) {  // 15% clock
+      } else if (randomNum < 0.90) {  // 5% clock (reduced from 15%)
         var clockItem = {
           x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - clockItemWidth),
           y: -clockItemHeight,
           speed: itemSpeed
         };
         clockItems.push(clockItem);
-      } else {  // 5% gun
-        if (!hasGun) {  // Only spawn if player doesn't have gun
-          var gunItem = {
-            x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - gunItemWidth),
-            y: -gunItemHeight,
-            speed: itemSpeed
-          };
-          gunItems.push(gunItem);
-        }
+      } else {  // 10% gun (increased from 5%)
+        var gunItem = {
+          x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - gunItemWidth),
+          y: -gunItemHeight,
+          speed: itemSpeed
+        };
+        gunItems.push(gunItem);
       }
     }
     return;  // Exit early during boss fight
@@ -1122,15 +1127,30 @@ function update() {
   // Draw boss beams
   for (var i = 0; i < bossBeams.length; i++) {
     var beam = bossBeams[i];
-    ctx.fillStyle = "rgba(255, 0, 0, 0.8)";  // Red laser
-    ctx.fillRect(beam.x, beam.y, beam.width, beam.height);
     
-    // Glow effect
-    ctx.shadowColor = "red";
-    ctx.shadowBlur = 10;
-    ctx.fillStyle = "rgba(255, 100, 100, 0.6)";
-    ctx.fillRect(beam.x - 2, beam.y, beam.width + 4, beam.height);
-    ctx.shadowBlur = 0;
+    if (beam.type === 'narrow') {
+      // Narrow red laser beam
+      ctx.fillStyle = "rgba(255, 0, 0, 0.8)";
+      ctx.fillRect(beam.x, beam.y, beam.width, beam.height);
+      
+      // Glow effect
+      ctx.shadowColor = "red";
+      ctx.shadowBlur = 10;
+      ctx.fillStyle = "rgba(255, 100, 100, 0.6)";
+      ctx.fillRect(beam.x - 2, beam.y, beam.width + 4, beam.height);
+      ctx.shadowBlur = 0;
+    } else if (beam.type === 'wide') {
+      // Wide horizontal laser beam
+      ctx.fillStyle = "rgba(255, 50, 0, 0.7)";
+      ctx.fillRect(beam.x, beam.y, beam.width, beam.height);
+      
+      // Strong glow effect for wide beam
+      ctx.shadowColor = "orange";
+      ctx.shadowBlur = 20;
+      ctx.fillStyle = "rgba(255, 150, 0, 0.5)";
+      ctx.fillRect(beam.x, beam.y - 5, beam.width, beam.height + 10);
+      ctx.shadowBlur = 0;
+    }
   }
   
   // Reset text alignment
@@ -1272,16 +1292,6 @@ function update() {
     ctx.fillText("⚠️ BOSS IN " + Math.ceil(bossCountdownTimer) + "s ⚠️", GAME_WIDTH / 2, 400);
     ctx.textAlign = "left";
   }
-  
-  // Draw gun status
-  if (bossActive && hasGun) {
-    ctx.font = "bold 24px 'Arial Black', Arial, sans-serif";
-    ctx.fillStyle = "yellow";
-    ctx.strokeStyle = "black";
-    ctx.lineWidth = 3;
-    ctx.strokeText("🔫 CLICK TO SHOOT!", 10, 300);
-    ctx.fillText("🔫 CLICK TO SHOOT!", 10, 300);
-  }
 
   if (isPlayerImmune) {
     ctx.font = "bold 26px 'Arial Black', Arial, sans-serif";
@@ -1346,8 +1356,8 @@ function update() {
   ctx.strokeStyle = "black";
   ctx.lineWidth = 2;
   ctx.textAlign = "center";
-  ctx.strokeText("V6 Beta Created by BHaleyArt", GAME_WIDTH / 2, GAME_HEIGHT - 10);
-  ctx.fillText("v6 Beta Created by BHaleyArt", GAME_WIDTH / 2, GAME_HEIGHT - 10);
+  ctx.strokeText("Created by BHaleyArt", GAME_WIDTH / 2, GAME_HEIGHT - 10);
+  ctx.fillText("Created by BHaleyArt", GAME_WIDTH / 2, GAME_HEIGHT - 10);
   ctx.textAlign = "left";
   
   // Draw damage flash effect (red screen overlay)
@@ -1473,47 +1483,139 @@ function update() {
     if (bossY < bossTargetY) {
       bossY += 2;  // Descend speed
     } else {
-      // Boss movement pattern (fly back and forth)
-      bossX += bossSpeed * bossDirection;
-      
-      // Bounce at edges
-      if (bossX <= 0) {
-        bossX = 0;
-        bossDirection = 1;
-      } else if (bossX >= GAME_WIDTH - bossWidth) {
-        bossX = GAME_WIDTH - bossWidth;
-        bossDirection = -1;
+      // Update phase timer and cycle through phases
+      bossPhaseTimer++;
+      if (bossPhaseTimer >= bossPhaseDuration) {
+        bossPhaseTimer = 0;
+        bossAttackPhase++;
+        if (bossAttackPhase > 3) bossAttackPhase = 1;  // Cycle back to phase 1
+        bossShootTimer = 0;  // Reset shoot timer for new phase
       }
       
-      // Boss shooting pattern
-      bossShootTimer++;
-      if (bossShootTimer >= bossShootInterval) {
-        bossShootTimer = 0;
-        // Create beam at boss center
-        var beam = {
-          x: bossX + bossWidth / 2 - 5,  // Center beam (10px wide)
-          y: bossY + bossHeight,
-          width: 10,
-          height: 0,  // Grows downward
-          growing: true
-        };
-        bossBeams.push(beam);
+      // PHASE 1: Side-to-side movement with downward beams
+      if (bossAttackPhase === 1) {
+        bossX += bossSpeed * bossDirection;
+        
+        // Bounce at edges
+        if (bossX <= 0) {
+          bossX = 0;
+          bossDirection = 1;
+        } else if (bossX >= GAME_WIDTH - bossWidth) {
+          bossX = GAME_WIDTH - bossWidth;
+          bossDirection = -1;
+        }
+        
+        // Shoot downward beams
+        bossShootTimer++;
+        if (bossShootTimer >= bossShootInterval) {
+          bossShootTimer = 0;
+          var beam = {
+            x: bossX + bossWidth / 2 - 5,
+            y: bossY + bossHeight,
+            width: 10,
+            height: 0,
+            growing: true,
+            type: 'narrow'
+          };
+          bossBeams.push(beam);
+        }
+      }
+      
+      // PHASE 2: Wide laser from sides (right then left)
+      else if (bossAttackPhase === 2) {
+        bossShootTimer++;
+        
+        // Position boss on right or left
+        var phaseProgress = bossPhaseTimer / bossPhaseDuration;
+        if (phaseProgress < 0.5) {
+          // First half: Right side
+          bossX = GAME_WIDTH - bossWidth - 10;
+          if (bossShootTimer === 30 || bossShootTimer === 90 || bossShootTimer === 150) {
+            // Wide laser from right
+            var beam = {
+              x: 0,
+              y: bossY + bossHeight / 2 - 15,
+              width: GAME_WIDTH,
+              height: 30,
+              growing: false,
+              duration: 60,
+              type: 'wide'
+            };
+            bossBeams.push(beam);
+          }
+        } else {
+          // Second half: Left side
+          bossX = 10;
+          if (bossShootTimer === 180 || bossShootTimer === 240) {
+            // Wide laser from left
+            var beam = {
+              x: 0,
+              y: bossY + bossHeight / 2 - 15,
+              width: GAME_WIDTH,
+              height: 30,
+              growing: false,
+              duration: 60,
+              type: 'wide'
+            };
+            bossBeams.push(beam);
+          }
+        }
+      }
+      
+      // PHASE 3: Fast movement with occasional downward blasts
+      else if (bossAttackPhase === 3) {
+        bossX += (bossSpeed * 3) * bossDirection;  // 3x faster
+        
+        // Bounce at edges
+        if (bossX <= 0) {
+          bossX = 0;
+          bossDirection = 1;
+        } else if (bossX >= GAME_WIDTH - bossWidth) {
+          bossX = GAME_WIDTH - bossWidth;
+          bossDirection = -1;
+        }
+        
+        // Occasional downward blasts
+        bossShootTimer++;
+        if (bossShootTimer >= 120) {  // Every 2 seconds
+          bossShootTimer = 0;
+          var beam = {
+            x: bossX + bossWidth / 2 - 5,
+            y: bossY + bossHeight,
+            width: 10,
+            height: 0,
+            growing: true,
+            type: 'narrow'
+          };
+          bossBeams.push(beam);
+        }
       }
     }
     
     // Update beams
     for (var i = bossBeams.length - 1; i >= 0; i--) {
       var beam = bossBeams[i];
-      if (beam.growing) {
-        beam.height += 15;  // Fast beam growth
-        if (beam.y + beam.height >= GAME_HEIGHT) {
-          beam.growing = false;
+      
+      if (beam.type === 'narrow') {
+        // Narrow beam logic
+        if (beam.growing) {
+          beam.height += 15;
+          if (beam.y + beam.height >= GAME_HEIGHT) {
+            beam.growing = false;
+          }
+        } else {
+          beam.height -= 10;
+          if (beam.height <= 0) {
+            bossBeams.splice(i, 1);
+            continue;
+          }
         }
-      } else {
-        // Beam fades
-        beam.height -= 10;
-        if (beam.height <= 0) {
+      } else if (beam.type === 'wide') {
+        // Wide beam logic
+        beam.duration--;
+        if (beam.duration <= 0) {
           bossBeams.splice(i, 1);
+          continue;
         }
       }
       
@@ -1534,6 +1636,8 @@ function update() {
   if (bossActive && bossHealth <= 0) {
     bossActive = false;
     bossCountdownStarted = false;
+    bossAttackPhase = 1;  // Reset phase
+    bossPhaseTimer = 0;
     // Award big bonus
     score += 5000;
   }
@@ -1567,46 +1671,6 @@ function toggleDevMode() {
 // restart button listener
 restartButton.addEventListener("click", function () {
   window.location.reload();
-});
-
-// Handle click/touch for shooting boss
-canvas.addEventListener("click", function(event) {
-  if (bossActive && hasGun && bossHealth > 0 && gameStarted) {
-    var rect = canvas.getBoundingClientRect();
-    var scaleX = GAME_WIDTH / rect.width;
-    var scaleY = GAME_HEIGHT / rect.height;
-    var clickX = (event.clientX - rect.left) * scaleX;
-    var clickY = (event.clientY - rect.top) * scaleY;
-    
-    // Check if clicked on boss
-    if (clickX >= bossX && clickX <= bossX + bossWidth &&
-        clickY >= bossY && clickY <= bossY + bossHeight) {
-      bossHealth--;
-      hasGun = false;  // Use up the gun
-      safePlayAudio(badItemSound);  // Hit sound
-      score += 500;  // Bonus for hitting boss
-    }
-  }
-});
-
-canvas.addEventListener("touchstart", function(event) {
-  if (bossActive && hasGun && bossHealth > 0 && gameStarted) {
-    event.preventDefault();
-    var rect = canvas.getBoundingClientRect();
-    var scaleX = GAME_WIDTH / rect.width;
-    var scaleY = GAME_HEIGHT / rect.height;
-    var touchX = (event.touches[0].clientX - rect.left) * scaleX;
-    var touchY = (event.touches[0].clientY - rect.top) * scaleY;
-    
-    // Check if touched on boss
-    if (touchX >= bossX && touchX <= bossX + bossWidth &&
-        touchY >= bossY && touchY <= bossY + bossHeight) {
-      bossHealth--;
-      hasGun = false;  // Use up the gun
-      safePlayAudio(badItemSound);  // Hit sound
-      score += 500;  // Bonus for hitting boss
-    }
-  }
 });
 
 // Add click event listener to URL button
