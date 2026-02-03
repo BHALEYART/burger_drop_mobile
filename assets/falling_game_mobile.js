@@ -109,8 +109,8 @@ var bossY = -100;  // Start above screen
 var bossTargetY = 100;  // Float at 100px from top (about 380px above player at bottom)
 var bossWidth = 80;
 var bossHeight = 80;
-var bossHealth = 3;  // 3 targets (reduced from 5 bolts)
-var bossMaxHealth = 3;
+var bossHealth = 4;  // 4 targets (increased from 3)
+var bossMaxHealth = 4;
 var bossDirection = 1;  // 1 = right, -1 = left
 var bossSpeed = 2;
 var bossShootTimer = 0;
@@ -122,6 +122,10 @@ var bossPhaseDuration = 300;  // 5 seconds per phase (300 frames at 60fps)
 var bossStunned = false;  // Boss stun state
 var bossStunTimer = 0;  // Stun duration
 var bossStunDuration = 30;  // 0.5 seconds at 60fps
+var bossDefeated = false;  // Boss defeat state
+var bossDeathTimer = 0;  // Death animation timer
+var bossDeathDuration = 90;  // 1.5 seconds death animation at 60fps
+var bossShakeAmount = 0;  // Shake intensity
 var gunItems = [];  // Special gun power-up for boss fight
 var gunItemWidth = 40;
 var gunItemHeight = 40;
@@ -761,6 +765,11 @@ function resetItems() {
     return;  // Don't spawn anything during delay
   }
   
+  // Pause spawning during boss defeat animation
+  if (bossDefeated && bossDefeatTimer > 0) {
+    return;  // Don't spawn anything during boss defeat
+  }
+  
   // During boss fight: only spawn burgers, clock, and gun
   if (bossActive && bossHealth > 0) {
     if (goodItems.length + clockItems.length + gunItems.length < 6) {  // Reduced max items during boss
@@ -1118,7 +1127,7 @@ function update() {
   }
   
   // Draw boss (Robot Emoji 🤖)
-  if (bossActive && bossHealth > 0) {
+  if (bossActive) {
     // Add stun flash effect
     if (bossStunned && Math.floor(bossStunTimer / 5) % 2 === 0) {
       // Flash white when stunned
@@ -1126,27 +1135,37 @@ function update() {
       ctx.shadowBlur = 20;
     }
     
+    // Apply shake effect during defeat
+    var shakeX = 0;
+    var shakeY = 0;
+    if (bossShakeAmount > 0) {
+      shakeX = (Math.random() - 0.5) * bossShakeAmount * 2;
+      shakeY = (Math.random() - 0.5) * bossShakeAmount * 2;
+    }
+    
     ctx.font = bossWidth + "px Arial";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText("🤖", bossX + bossWidth/2, bossY + bossHeight/2);
+    ctx.fillText("🤖", bossX + bossWidth/2 + shakeX, bossY + bossHeight/2 + shakeY);
     ctx.shadowBlur = 0;  // Reset shadow
     
-    // Draw boss health bar (target emojis with label)
-    ctx.font = "bold 24px 'Arial Black', Arial, sans-serif";
-    ctx.fillStyle = "white";
-    ctx.strokeStyle = "black";
-    ctx.lineWidth = 3;
-    ctx.textAlign = "left";
-    ctx.strokeText("BOSS:", 10, 50);
-    ctx.fillText("BOSS:", 10, 50);
-    
-    // Draw target emojis for health
-    ctx.font = "30px Arial";
-    for (var i = 0; i < bossHealth; i++) {
-      ctx.fillText("🎯", 90 + (i * 40), 50);
+    // Draw boss health bar only if alive
+    if (bossHealth > 0 && !bossDefeated) {
+      ctx.font = "bold 24px 'Arial Black', Arial, sans-serif";
+      ctx.fillStyle = "white";
+      ctx.strokeStyle = "black";
+      ctx.lineWidth = 3;
+      ctx.textAlign = "left";
+      ctx.strokeText("BOSS:", 10, 50);
+      ctx.fillText("BOSS:", 10, 50);
+      
+      // Draw target emojis for health
+      ctx.font = "30px Arial";
+      for (var i = 0; i < bossHealth; i++) {
+        ctx.fillText("🎯", 90 + (i * 40), 50);
+      }
+      ctx.textAlign = "center";  // Reset for boss rendering
     }
-    ctx.textAlign = "center";  // Reset for boss rendering
   }
   
   // Draw boss beams
@@ -1381,8 +1400,8 @@ function update() {
   ctx.strokeStyle = "black";
   ctx.lineWidth = 2;
   ctx.textAlign = "center";
-  ctx.strokeText("V6.4 Created by BHaleyArt", GAME_WIDTH / 2, GAME_HEIGHT - 10);
-  ctx.fillText("V6.4 Created by BHaleyArt", GAME_WIDTH / 2, GAME_HEIGHT - 10);
+  ctx.strokeText("V6.5 Created by BHaleyArt", GAME_WIDTH / 2, GAME_HEIGHT - 10);
+  ctx.fillText("V6.5 Created by BHaleyArt", GAME_WIDTH / 2, GAME_HEIGHT - 10);
   ctx.textAlign = "left";
   
   // Draw damage flash effect (red screen overlay)
@@ -1663,14 +1682,41 @@ function update() {
     }
   }
   
-  // End boss fight if defeated
-  if (bossActive && bossHealth <= 0) {
-    bossActive = false;
-    bossCountdownStarted = false;
-    bossAttackPhase = 1;  // Reset phase
-    bossPhaseTimer = 0;
+  // Boss defeat triggers death animation
+  if (bossActive && bossHealth <= 0 && !bossDefeated) {
+    bossDefeated = true;
+    bossDefeatTimer = bossDefeatDuration;
+    // Clear all lasers immediately
+    bossBeams = [];
     // Award big bonus
     score += 5000;
+    // Reset speed to 10 if higher
+    if (itemSpeed > 10) {
+      itemSpeed = 10;
+    }
+  }
+  
+  // Boss defeat animation (shake then fly off)
+  if (bossDefeated && bossDefeatTimer > 0) {
+    bossDefeatTimer--;
+    
+    // First half: Shake
+    if (bossDefeatTimer > bossDefeatDuration / 2) {
+      bossShakeAmount = 5;
+    } else {
+      // Second half: Fly off screen upward
+      bossY -= 8;
+      bossShakeAmount = 0;
+    }
+    
+    // End of defeat sequence
+    if (bossDefeatTimer <= 0) {
+      bossActive = false;
+      bossDefeated = false;
+      bossCountdownStarted = false;
+      bossAttackPhase = 1;
+      bossPhaseTimer = 0;
+    }
   }
 
   spawnCounter++;
