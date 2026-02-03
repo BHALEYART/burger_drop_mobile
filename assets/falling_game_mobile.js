@@ -1381,8 +1381,8 @@ function update() {
   ctx.strokeStyle = "black";
   ctx.lineWidth = 2;
   ctx.textAlign = "center";
-  ctx.strokeText("V6.3 Created by BHaleyArt", GAME_WIDTH / 2, GAME_HEIGHT - 10);
-  ctx.fillText("V6.3 Created by BHaleyArt", GAME_WIDTH / 2, GAME_HEIGHT - 10);
+  ctx.strokeText("V6.4 Created by BHaleyArt", GAME_WIDTH / 2, GAME_HEIGHT - 10);
+  ctx.fillText("V6.4 Created by BHaleyArt", GAME_WIDTH / 2, GAME_HEIGHT - 10);
   ctx.textAlign = "left";
   
   // Draw damage flash effect (red screen overlay)
@@ -1518,118 +1518,119 @@ function update() {
         if (bossStunTimer <= 0) {
           bossStunned = false;
         }
-        // Boss doesn't move or attack while stunned
-        return;
-      }
-      
-      // Update phase timer and cycle through phases
-      bossPhaseTimer++;
-      if (bossPhaseTimer >= bossPhaseDuration) {
-        bossPhaseTimer = 0;
-        bossAttackPhase++;
-        if (bossAttackPhase > 3) bossAttackPhase = 1;  // Cycle back to phase 1
-        bossShootTimer = 0;  // Reset shoot timer for new phase
-      }
-      
-      // PHASE 1: Side-to-side movement with downward beams
-      if (bossAttackPhase === 1) {
-        bossX += bossSpeed * bossDirection;
+        // Skip boss movement and attacks while stunned, but continue game update
+      } else {
+        // Boss is not stunned - normal behavior
         
-        // Bounce at edges
-        if (bossX <= 0) {
-          bossX = 0;
-          bossDirection = 1;
-        } else if (bossX >= GAME_WIDTH - bossWidth) {
-          bossX = GAME_WIDTH - bossWidth;
-          bossDirection = -1;
+        // Update phase timer and cycle through phases
+        bossPhaseTimer++;
+        if (bossPhaseTimer >= bossPhaseDuration) {
+          bossPhaseTimer = 0;
+          bossAttackPhase++;
+          if (bossAttackPhase > 3) bossAttackPhase = 1;  // Cycle back to phase 1
+          bossShootTimer = 0;  // Reset shoot timer for new phase
         }
         
-        // Shoot downward beams
-        bossShootTimer++;
-        if (bossShootTimer >= bossShootInterval) {
-          bossShootTimer = 0;
-          var beam = {
-            x: bossX + bossWidth / 2 - 5,
-            y: bossY + bossHeight,
-            width: 10,
-            height: 0,
-            growing: true,
-            type: 'narrow'
-          };
-          bossBeams.push(beam);
-        }
-      }
-      
-      // PHASE 2: Wide laser blasts downward from sides
-      else if (bossAttackPhase === 2) {
-        bossShootTimer++;
-        
-        // Position boss on right or left
-        var phaseProgress = bossPhaseTimer / bossPhaseDuration;
-        if (phaseProgress < 0.5) {
-          // First half: Right side
-          bossX = GAME_WIDTH - bossWidth - 10;
-          if (bossShootTimer === 30 || bossShootTimer === 90 || bossShootTimer === 150) {
-            // Wide downward laser from right side
-            var beam = {
-              x: bossX + bossWidth / 2 - 60,  // Wide beam centered on boss
-              y: bossY + bossHeight,
-              width: 120,  // Wide beam
-              height: 0,
-              growing: true,
-              type: 'wide'
-            };
-            bossBeams.push(beam);
+        // PHASE 1: Side-to-side movement with downward beams
+        if (bossAttackPhase === 1) {
+          bossX += bossSpeed * bossDirection;
+          
+          // Bounce at edges
+          if (bossX <= 0) {
+            bossX = 0;
+            bossDirection = 1;
+          } else if (bossX >= GAME_WIDTH - bossWidth) {
+            bossX = GAME_WIDTH - bossWidth;
+            bossDirection = -1;
           }
-        } else {
-          // Second half: Left side
-          bossX = 10;
-          if (bossShootTimer === 180 || bossShootTimer === 240) {
-            // Wide downward laser from left side
+          
+          // Shoot downward beams
+          bossShootTimer++;
+          if (bossShootTimer >= bossShootInterval) {
+            bossShootTimer = 0;
             var beam = {
-              x: bossX + bossWidth / 2 - 60,  // Wide beam centered on boss
+              x: bossX + bossWidth / 2 - 5,
               y: bossY + bossHeight,
-              width: 120,  // Wide beam
+              width: 10,
               height: 0,
               growing: true,
-              type: 'wide'
+              type: 'narrow'
             };
             bossBeams.push(beam);
           }
         }
-      }
-      
-      // PHASE 3: Fast movement with occasional downward blasts
-      else if (bossAttackPhase === 3) {
-        bossX += (bossSpeed * 3) * bossDirection;  // 3x faster
         
-        // Bounce at edges
-        if (bossX <= 0) {
-          bossX = 0;
-          bossDirection = 1;
-        } else if (bossX >= GAME_WIDTH - bossWidth) {
-          bossX = GAME_WIDTH - bossWidth;
-          bossDirection = -1;
+        // PHASE 2: Wide laser blasts downward from sides
+        else if (bossAttackPhase === 2) {
+          bossShootTimer++;
+          
+          // Position boss on right or left
+          var phaseProgress = bossPhaseTimer / bossPhaseDuration;
+          if (phaseProgress < 0.5) {
+            // First half: Right side
+            bossX = GAME_WIDTH - bossWidth - 10;
+            if (bossShootTimer === 30 || bossShootTimer === 90 || bossShootTimer === 150) {
+              // Wide downward laser from right side
+              var beam = {
+                x: bossX + bossWidth / 2 - 60,  // Wide beam centered on boss
+                y: bossY + bossHeight,
+                width: 120,  // Wide beam
+                height: 0,
+                growing: true,
+                type: 'wide'
+              };
+              bossBeams.push(beam);
+            }
+          } else {
+            // Second half: Left side
+            bossX = 10;
+            if (bossShootTimer === 180 || bossShootTimer === 240) {
+              // Wide downward laser from left side
+              var beam = {
+                x: bossX + bossWidth / 2 - 60,  // Wide beam centered on boss
+                y: bossY + bossHeight,
+                width: 120,  // Wide beam
+                height: 0,
+                growing: true,
+                type: 'wide'
+              };
+              bossBeams.push(beam);
+            }
+          }
         }
         
-        // Occasional downward blasts
-        bossShootTimer++;
-        if (bossShootTimer >= 120) {  // Every 2 seconds
-          bossShootTimer = 0;
-          var beam = {
-            x: bossX + bossWidth / 2 - 5,
-            y: bossY + bossHeight,
-            width: 10,
-            height: 0,
-            growing: true,
-            type: 'narrow'
-          };
-          bossBeams.push(beam);
+        // PHASE 3: Fast movement with occasional downward blasts
+        else if (bossAttackPhase === 3) {
+          bossX += (bossSpeed * 3) * bossDirection;  // 3x faster
+          
+          // Bounce at edges
+          if (bossX <= 0) {
+            bossX = 0;
+            bossDirection = 1;
+          } else if (bossX >= GAME_WIDTH - bossWidth) {
+            bossX = GAME_WIDTH - bossWidth;
+            bossDirection = -1;
+          }
+          
+          // Occasional downward blasts
+          bossShootTimer++;
+          if (bossShootTimer >= 120) {  // Every 2 seconds
+            bossShootTimer = 0;
+            var beam = {
+              x: bossX + bossWidth / 2 - 5,
+              y: bossY + bossHeight,
+              width: 10,
+              height: 0,
+              growing: true,
+              type: 'narrow'
+            };
+            bossBeams.push(beam);
+          }
         }
       }
     }
     
-    // Update beams
+    // Update beams (always update, even when stunned)
     for (var i = bossBeams.length - 1; i >= 0; i--) {
       var beam = bossBeams[i];
       
