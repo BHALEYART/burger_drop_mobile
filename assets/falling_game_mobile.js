@@ -1432,7 +1432,7 @@ function update() {
     ctx.drawImage(
       gameOverImage,
       GAME_WIDTH / 2 - 150,
-      GAME_HEIGHT / 2 - 200,  // Raised from -150 to -200
+      GAME_HEIGHT / 2 - 240,  // Raised from -150 to -200
       300,
       300
     );
@@ -1446,7 +1446,7 @@ function update() {
     ctx.drawImage(
       gameOverPileImage,
       -70,
-      GAME_HEIGHT - 530,  // Raised from -480 to -530
+      GAME_HEIGHT - 500,  // Raised from -480 to -530
       600,
       600
     );
