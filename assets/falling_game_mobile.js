@@ -51,6 +51,7 @@ var clockItems = [];   // New clock item array
 var nukeItems = [];    // New nuke item array
 var fireItems = [];    // New fire item array
 var comboItems = [];   // New combo item array (shield + fire)
+var gunItems = [];     // Gun items for boss fight
 var fireItems = [];    // New fire item array
 var maxItems = 8;
 var itemSpeed = 2;
@@ -85,6 +86,11 @@ var fireDuration = 10;
 var fireTimer = 0;
 var fireItemWidth = 40;
 var fireItemHeight = 40;
+var fireActive = false;
+var fireDuration = 10;
+var fireTimer = 0;
+var fireItemWidth = 40;
+var fireItemHeight = 40;
 var comboActive = false;  // Combo power (shield + fire combined)
 var comboDuration = 10;
 var comboTimer = 0;
@@ -93,6 +99,28 @@ var comboItemHeight = 40;
 var nukeFlash = 0;  // Nuke flash effect
 var nukeFlashDecay = 0.08;  // Faster fade than damage flash
 var spawnDelay = 0;  // Delay for spawning items after nuke
+
+// Boss fight variables
+var bossCountdownStarted = false;
+var bossCountdownTimer = 10;  // 10 seconds countdown
+var bossActive = false;
+var bossX = GAME_WIDTH / 2 - 40;  // Center, boss is 80px wide
+var bossY = -100;  // Start above screen
+var bossTargetY = 100;  // Float at 100px from top (about 380px above player at bottom)
+var bossWidth = 80;
+var bossHeight = 80;
+var bossHealth = 5;  // 5 bolts
+var bossMaxHealth = 5;
+var bossDirection = 1;  // 1 = right, -1 = left
+var bossSpeed = 2;
+var bossShootTimer = 0;
+var bossShootInterval = 90;  // Shoot every 90 frames (~1.5 seconds at 60fps)
+var bossBeams = [];  // Array of laser beams
+var gunItems = [];  // Special gun power-up for boss fight
+var gunItemWidth = 40;
+var gunItemHeight = 40;
+var hasGun = false;  // Player has gun equipped
+var developerMode = false;  // Developer mode toggle
 
 // Device detection
 var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -655,7 +683,7 @@ function checkCollision() {
       
       // Trigger flash effect and spawn delay
       nukeFlash = 1.0;
-      spawnDelay = 0.3;  // 1 seconds delay
+      spawnDelay = 2.0;  // 2 seconds delay
       
       nukeItems.splice(i, 1);
     }
@@ -694,6 +722,21 @@ function checkCollision() {
       comboItems.splice(i, 1);
     }
   }
+  
+  // Gun item collision (for boss fight)
+  for (var i = 0; i < gunItems.length; i++) {
+    var gunItem = gunItems[i];
+    if (
+      playerX + hitboxMargin < gunItem.x + gunItemWidth - hitboxMargin &&
+      playerX + playerWidth - hitboxMargin > gunItem.x + hitboxMargin &&
+      playerY + hitboxMargin < gunItem.y + gunItemHeight - hitboxMargin &&
+      playerY + playerHeight - hitboxMargin > gunItem.y + hitboxMargin
+    ) {
+      hasGun = true;
+      safePlayAudio(goodItemSound);
+      gunItems.splice(i, 1);
+    }
+  }
 }
 
 // Reset item position and speed
@@ -702,6 +745,40 @@ function resetItems() {
   if (spawnDelay > 0) {
     spawnDelay -= 1 / 60;  // Decrease by 1 frame at 60fps
     return;  // Don't spawn anything during delay
+  }
+  
+  // During boss fight: only spawn burgers, clock, and gun
+  if (bossActive && bossHealth > 0) {
+    if (goodItems.length + clockItems.length + gunItems.length < 6) {  // Reduced max items during boss
+      var randomNum = Math.random();
+      var spawnableWidth = GAME_WIDTH - SCREEN_MARGIN_LEFT - SCREEN_MARGIN_RIGHT;
+      
+      if (randomNum < 0.80) {  // 80% burgers
+        var goodItem = {
+          x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - goodItemWidth),
+          y: -goodItemHeight,
+          speed: itemSpeed
+        };
+        goodItems.push(goodItem);
+      } else if (randomNum < 0.95) {  // 15% clock
+        var clockItem = {
+          x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - clockItemWidth),
+          y: -clockItemHeight,
+          speed: itemSpeed
+        };
+        clockItems.push(clockItem);
+      } else {  // 5% gun
+        if (!hasGun) {  // Only spawn if player doesn't have gun
+          var gunItem = {
+            x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - gunItemWidth),
+            y: -gunItemHeight,
+            speed: itemSpeed
+          };
+          gunItems.push(gunItem);
+        }
+      }
+    }
+    return;  // Exit early during boss fight
   }
   
   if (goodItems.length + badItems.length + surpriseItems.length + shieldItems.length + clockItems.length + nukeItems.length + fireItems.length + comboItems.length < maxItems) {
@@ -760,9 +837,9 @@ function resetItems() {
       var clockChance = currentChance;
     }
     
-    // Nuke - increased rate after speed 20
+    // Nuke - increased rate after speed 16
     if (canSpawnNuke) {
-      var nukeRate = itemSpeed >= 20 ? 0.009 : 0.06;  // Double rate at 20+ (0.6% vs 0.3%)
+      var nukeRate = itemSpeed >= 16 ? 0.006 : 0.003;  // Double rate at 16+ (0.6% vs 0.3%)
       currentChance += nukeRate;
       var nukeChance = currentChance;
     }
@@ -1014,6 +1091,47 @@ function update() {
       comboItems.splice(i, 1);
     }
   }
+
+  // Draw gun items (Gun Emoji 🔫 - for boss fight)
+  for (var i = 0; i < gunItems.length; i++) {
+    var gunItem = gunItems[i];
+    ctx.font = gunItemWidth + "px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("🔫", gunItem.x + gunItemWidth/2, gunItem.y + gunItemHeight/2);
+    gunItem.y += gunItem.speed;
+    if (gunItem.y > GAME_HEIGHT) {
+      gunItems.splice(i, 1);
+    }
+  }
+  
+  // Draw boss (Robot Emoji 🤖)
+  if (bossActive && bossHealth > 0) {
+    ctx.font = bossWidth + "px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("🤖", bossX + bossWidth/2, bossY + bossHeight/2);
+    
+    // Draw boss health bar (5 bolts)
+    for (var i = 0; i < bossHealth; i++) {
+      ctx.font = "30px Arial";
+      ctx.fillText("⚡", 10 + (i * 35), 50);
+    }
+  }
+  
+  // Draw boss beams
+  for (var i = 0; i < bossBeams.length; i++) {
+    var beam = bossBeams[i];
+    ctx.fillStyle = "rgba(255, 0, 0, 0.8)";  // Red laser
+    ctx.fillRect(beam.x, beam.y, beam.width, beam.height);
+    
+    // Glow effect
+    ctx.shadowColor = "red";
+    ctx.shadowBlur = 10;
+    ctx.fillStyle = "rgba(255, 100, 100, 0.6)";
+    ctx.fillRect(beam.x - 2, beam.y, beam.width + 4, beam.height);
+    ctx.shadowBlur = 0;
+  }
   
   // Reset text alignment
   ctx.textAlign = "left";
@@ -1021,7 +1139,7 @@ function update() {
 
   // Draw shield line effect (80 pixels above player)
   if (shieldActive) {
-    var shieldY = playerY - 300;
+    var shieldY = playerY - 80;
     ctx.strokeStyle = "cyan";
     ctx.lineWidth = 4;
     ctx.shadowColor = "cyan";
@@ -1051,7 +1169,7 @@ function update() {
   
   // Draw fire line effect (80 pixels above player) - Auto-collects burgers only
   if (fireActive) {
-    var fireY = playerY - 380;
+    var fireY = playerY - 80;
     ctx.strokeStyle = "red";
     ctx.lineWidth = 4;
     ctx.shadowColor = "red";
@@ -1081,7 +1199,7 @@ function update() {
   
   // Draw combo line effect (80 pixels above player) - GREEN combines Shield + Fire
   if (comboActive) {
-    var comboY = playerY - 340;
+    var comboY = playerY - 80;
     ctx.strokeStyle = "lime";  // Bright green
     ctx.lineWidth = 5;  // Slightly thicker than others
     ctx.shadowColor = "lime";
@@ -1141,6 +1259,28 @@ function update() {
     var heartX = GAME_WIDTH - heartWidth - 10;  // Right side with 10px margin
     var heartY = 10 + (i * (heartHeight + 10));  // Stack vertically with 10px spacing
     ctx.drawImage(heartImage, heartX, heartY, heartWidth, heartHeight);
+  }
+  
+  // Draw boss countdown
+  if (bossCountdownStarted && !bossActive) {
+    ctx.font = "bold 36px 'Arial Black', Arial, sans-serif";
+    ctx.fillStyle = "red";
+    ctx.strokeStyle = "black";
+    ctx.lineWidth = 4;
+    ctx.textAlign = "center";
+    ctx.strokeText("⚠️ BOSS IN " + Math.ceil(bossCountdownTimer) + "s ⚠️", GAME_WIDTH / 2, 400);
+    ctx.fillText("⚠️ BOSS IN " + Math.ceil(bossCountdownTimer) + "s ⚠️", GAME_WIDTH / 2, 400);
+    ctx.textAlign = "left";
+  }
+  
+  // Draw gun status
+  if (bossActive && hasGun) {
+    ctx.font = "bold 24px 'Arial Black', Arial, sans-serif";
+    ctx.fillStyle = "yellow";
+    ctx.strokeStyle = "black";
+    ctx.lineWidth = 3;
+    ctx.strokeText("🔫 CLICK TO SHOOT!", 10, 300);
+    ctx.fillText("🔫 CLICK TO SHOOT!", 10, 300);
   }
 
   if (isPlayerImmune) {
@@ -1300,6 +1440,103 @@ function update() {
   if (itemSpeed > maxFallSpeed) {
     itemSpeed = maxFallSpeed;
   }
+  
+  // Boss fight countdown logic
+  if ((itemSpeed >= maxFallSpeed || developerMode) && !bossCountdownStarted && !bossActive) {
+    bossCountdownStarted = true;
+    bossCountdownTimer = 10;
+  }
+  
+  if (bossCountdownStarted && !bossActive) {
+    bossCountdownTimer -= 1 / 60;
+    if (bossCountdownTimer <= 0) {
+      // Start boss fight!
+      bossActive = true;
+      bossY = -100;  // Reset position above screen
+      bossHealth = bossMaxHealth;
+      hasGun = false;
+      // Clear all existing items except clock
+      goodItems = [];
+      badItems = [];
+      surpriseItems = [];
+      medicalItems = [];
+      shieldItems = [];
+      fireItems = [];
+      comboItems = [];
+      nukeItems = [];
+    }
+  }
+  
+  // Update boss during boss fight
+  if (bossActive && bossHealth > 0) {
+    // Boss descends to target position
+    if (bossY < bossTargetY) {
+      bossY += 2;  // Descend speed
+    } else {
+      // Boss movement pattern (fly back and forth)
+      bossX += bossSpeed * bossDirection;
+      
+      // Bounce at edges
+      if (bossX <= 0) {
+        bossX = 0;
+        bossDirection = 1;
+      } else if (bossX >= GAME_WIDTH - bossWidth) {
+        bossX = GAME_WIDTH - bossWidth;
+        bossDirection = -1;
+      }
+      
+      // Boss shooting pattern
+      bossShootTimer++;
+      if (bossShootTimer >= bossShootInterval) {
+        bossShootTimer = 0;
+        // Create beam at boss center
+        var beam = {
+          x: bossX + bossWidth / 2 - 5,  // Center beam (10px wide)
+          y: bossY + bossHeight,
+          width: 10,
+          height: 0,  // Grows downward
+          growing: true
+        };
+        bossBeams.push(beam);
+      }
+    }
+    
+    // Update beams
+    for (var i = bossBeams.length - 1; i >= 0; i--) {
+      var beam = bossBeams[i];
+      if (beam.growing) {
+        beam.height += 15;  // Fast beam growth
+        if (beam.y + beam.height >= GAME_HEIGHT) {
+          beam.growing = false;
+        }
+      } else {
+        // Beam fades
+        beam.height -= 10;
+        if (beam.height <= 0) {
+          bossBeams.splice(i, 1);
+        }
+      }
+      
+      // Check beam collision with player
+      if (!isPlayerImmune && 
+          playerX < beam.x + beam.width &&
+          playerX + playerWidth > beam.x &&
+          playerY < beam.y + beam.height &&
+          playerY + playerHeight > beam.y) {
+        hearts--;
+        damageFlash = 1.0;
+        safePlayAudio(badItemSound);
+      }
+    }
+  }
+  
+  // End boss fight if defeated
+  if (bossActive && bossHealth <= 0) {
+    bossActive = false;
+    bossCountdownStarted = false;
+    // Award big bonus
+    score += 5000;
+  }
 
   spawnCounter++;
   if (spawnCounter % 10 === 0) {
@@ -1309,14 +1546,72 @@ function update() {
   requestAnimationFrame(update);
 }
 
+// Developer mode toggle function
+function toggleDevMode() {
+  developerMode = !developerMode;
+  var button = document.getElementById('devModeButton');
+  if (developerMode) {
+    button.innerText = 'DEV MODE: ON';
+    button.classList.add('active');
+    // Immediately start boss countdown if not already started
+    if (!bossCountdownStarted && !bossActive) {
+      bossCountdownStarted = true;
+      bossCountdownTimer = 10;
+    }
+  } else {
+    button.innerText = 'DEV MODE: OFF';
+    button.classList.remove('active');
+  }
+}
+
 // restart button listener
 restartButton.addEventListener("click", function () {
   window.location.reload();
 });
 
+// Handle click/touch for shooting boss
+canvas.addEventListener("click", function(event) {
+  if (bossActive && hasGun && bossHealth > 0 && gameStarted) {
+    var rect = canvas.getBoundingClientRect();
+    var scaleX = GAME_WIDTH / rect.width;
+    var scaleY = GAME_HEIGHT / rect.height;
+    var clickX = (event.clientX - rect.left) * scaleX;
+    var clickY = (event.clientY - rect.top) * scaleY;
+    
+    // Check if clicked on boss
+    if (clickX >= bossX && clickX <= bossX + bossWidth &&
+        clickY >= bossY && clickY <= bossY + bossHeight) {
+      bossHealth--;
+      hasGun = false;  // Use up the gun
+      safePlayAudio(badItemSound);  // Hit sound
+      score += 500;  // Bonus for hitting boss
+    }
+  }
+});
+
+canvas.addEventListener("touchstart", function(event) {
+  if (bossActive && hasGun && bossHealth > 0 && gameStarted) {
+    event.preventDefault();
+    var rect = canvas.getBoundingClientRect();
+    var scaleX = GAME_WIDTH / rect.width;
+    var scaleY = GAME_HEIGHT / rect.height;
+    var touchX = (event.touches[0].clientX - rect.left) * scaleX;
+    var touchY = (event.touches[0].clientY - rect.top) * scaleY;
+    
+    // Check if touched on boss
+    if (touchX >= bossX && touchX <= bossX + bossWidth &&
+        touchY >= bossY && touchY <= bossY + bossHeight) {
+      bossHealth--;
+      hasGun = false;  // Use up the gun
+      safePlayAudio(badItemSound);  // Hit sound
+      score += 500;  // Bonus for hitting boss
+    }
+  }
+});
+
 // Add click event listener to URL button
 watchButton.addEventListener("click", function() {
-  window.location.href = ("https://youtube.com/@bhaleyart");
+  window.location.href = ("https://bombpop.link/bigheadbillions");
 });
 
 // Handle mouse movement (PC)
