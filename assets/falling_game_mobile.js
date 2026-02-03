@@ -1397,8 +1397,8 @@ function update() {
   ctx.strokeStyle = "black";
   ctx.lineWidth = 2;
   ctx.textAlign = "center";
-  ctx.strokeText("V6.8 Created by BHaleyArt", GAME_WIDTH / 2, GAME_HEIGHT - 10);
-  ctx.fillText("V6.8 Created by BHaleyArt", GAME_WIDTH / 2, GAME_HEIGHT - 10);
+  ctx.strokeText("V6.9 Created by BHaleyArt", GAME_WIDTH / 2, GAME_HEIGHT - 10);
+  ctx.fillText("V6.9 Created by BHaleyArt", GAME_WIDTH / 2, GAME_HEIGHT - 10);
   ctx.textAlign = "left";
   
   // Draw damage flash effect (red screen overlay)
@@ -1427,7 +1427,7 @@ function update() {
     ctx.drawImage(
       gameOverImage,
       GAME_WIDTH / 2 - 150,
-      GAME_HEIGHT / 2 - 240,  // Raised from -150 to -200
+      GAME_HEIGHT / 2 - 280,  // Raised from -150 to -200
       300,
       300
     );
@@ -1441,7 +1441,7 @@ function update() {
     ctx.drawImage(
       gameOverPileImage,
       -70,
-      GAME_HEIGHT - 500,  // Raised from -480 to -530
+      GAME_HEIGHT - 420,  // Raised from -480 to -530
       600,
       600
     );
