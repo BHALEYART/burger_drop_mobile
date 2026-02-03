@@ -86,9 +86,30 @@
       -webkit-user-select: none;
       user-select: none;
     }
+    
+    /* Developer Mode Button */
+    #devModeButton {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      padding: 10px 15px;
+      background-color: rgba(255, 0, 0, 0.7);
+      color: white;
+      border: 2px solid white;
+      border-radius: 5px;
+      font-weight: bold;
+      cursor: pointer;
+      z-index: 1000;
+      font-size: 14px;
+    }
+    
+    #devModeButton.active {
+      background-color: rgba(0, 255, 0, 0.7);
+    }
   </style>
 </head>
 <body>
+  <button id="devModeButton" onclick="toggleDevMode()">DEV MODE: OFF</button>
   <canvas id="gameCanvas" width="450" height="800"></canvas>
   <script src="assets/falling_game_mobile.js"></script>
 </body>
