@@ -779,27 +779,22 @@ function resetItems() {
       var spawnableWidth = GAME_WIDTH - SCREEN_MARGIN_LEFT - SCREEN_MARGIN_RIGHT;
       
       if (randomNum < 0.85) {  // 85% burgers
-        var goodItem = {
-          x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - goodItemWidth),
-          y: -goodItemHeight,
-          speed: itemSpeed
-        };
-        goodItems.push(goodItem);
-      } else if (randomNum < 0.90) {  // 5% clock (reduced from 15%)
-        var clockItem = {
-          x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - clockItemWidth),
-          y: -clockItemHeight,
-          speed: itemSpeed
-        };
-        clockItems.push(clockItem);
-      } else {  // 10% gun (increased from 5%)
-        var gunItem = {
-          x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - gunItemWidth),
-          y: -gunItemHeight,
-          speed: itemSpeed
-        };
-        gunItems.push(gunItem);
-      }
+  // ... burger spawn code
+} else if (randomNum < 0.88) {  // 3% clock (0.85 + 0.03 = 0.88)
+  var clockItem = {
+    x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - clockItemWidth),
+    y: -clockItemHeight,
+    speed: itemSpeed
+  };
+  clockItems.push(clockItem);
+} else if (randomNum < 0.93) {  // 5% gun (0.88 + 0.05 = 0.93)
+  var gunItem = {
+    x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - gunItemWidth),
+    y: -gunItemHeight,
+    speed: itemSpeed
+  };
+  gunItems.push(gunItem);
+}
     }
     return;  // Exit early during boss fight
   }
