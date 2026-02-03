@@ -8,6 +8,7 @@ var badItemImage = new Image();
 var surpriseItemImage = new Image();
 var medicalItemImage = new Image();
 var heartImage = new Image();
+var spritesheet = new Image();
 var gameOverImage = new Image();
 var menuOverlayImage = new Image();
 var gameOverPileImage = new Image();
@@ -332,10 +333,11 @@ medicalItemImage.src = "assets/medical_item.png";
 heartImage.src = "assets/heart.png";
 gameOverImage.src = "assets/game_over.png";
 menuOverlayImage.src = "assets/menu_shader.png";
+spritesheet.src = "assets/spritesheet.png";
 
 // Image loading counter
 var imagesLoaded = 0;
-var totalImages = 10;
+var totalImages = 11;
 var allImagesLoaded = false;
 
 // Function to check if all images are loaded
@@ -358,6 +360,34 @@ medicalItemImage.onload = imageLoaded;
 heartImage.onload = imageLoaded;
 gameOverImage.onload = imageLoaded;
 menuOverlayImage.onload = imageLoaded;
+spritesheet.onload = imageLoaded;
+
+// Sprite positions in spritesheet (860x280, 6x2 grid)
+var sprites = {
+  gun:    { x: 0,   y: 0,   w: 120, h: 120 },
+  burger: { x: 143, y: 0,   w: 120, h: 120 },
+  bomb:   { x: 286, y: 0,   w: 120, h: 120 },
+  germ:   { x: 429, y: 0,   w: 120, h: 120 },
+  fries:  { x: 572, y: 0,   w: 120, h: 120 },
+  shield: { x: 715, y: 0,   w: 120, h: 120 },
+  fire:   { x: 0,   y: 140, w: 120, h: 120 },
+  clock:  { x: 143, y: 140, w: 120, h: 120 },
+  demon:  { x: 286, y: 140, w: 120, h: 120 },  // BOSS
+  helmet: { x: 429, y: 140, w: 120, h: 120 },
+  amulet: { x: 572, y: 140, w: 120, h: 120 }   // COMBO
+};
+
+// Helper function to draw sprites
+function drawSprite(spriteName, x, y, width, height) {
+  var sprite = sprites[spriteName];
+  if (sprite && spritesheet.complete) {
+    ctx.drawImage(
+      spritesheet,
+      sprite.x, sprite.y, sprite.w, sprite.h,
+      x, y, width, height
+    );
+  }
+}
 
 // Preload audio files
 preloadAudio();
@@ -993,158 +1023,125 @@ function update() {
     );
   }
 
-  // Draw good items (Burger Emoji 🍔)
-  for (var i = 0; i < goodItems.length; i++) {
-    var goodItem = goodItems[i];
-    ctx.font = goodItemWidth + "px Arial";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText("🍔", goodItem.x + goodItemWidth/2, goodItem.y + goodItemHeight/2);
-    goodItem.y += goodItem.speed;
-    if (goodItem.y > GAME_HEIGHT) {
-      goodItems.splice(i, 1);
-    }
+// Draw good items (Burger sprite)
+for (var i = 0; i < goodItems.length; i++) {
+  var goodItem = goodItems[i];
+  drawSprite('burger', goodItem.x, goodItem.y, goodItemWidth, goodItemHeight);
+  goodItem.y += goodItem.speed;
+  if (goodItem.y > GAME_HEIGHT) {
+    goodItems.splice(i, 1);
   }
+}
 
-  // Draw bad items (Bomb Emoji 💣)
-  for (var i = 0; i < badItems.length; i++) {
-    var badItem = badItems[i];
-    ctx.font = badItemWidth + "px Arial";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText("💣", badItem.x + badItemWidth/2, badItem.y + badItemHeight/2);
-    badItem.y += badItem.speed;
-    if (badItem.y > GAME_HEIGHT) {
-      badItems.splice(i, 1);
-    }
+// Draw bad items (Bomb sprite)
+for (var i = 0; i < badItems.length; i++) {
+  var badItem = badItems[i];
+  drawSprite('bomb', badItem.x, badItem.y, badItemWidth, badItemHeight);
+  badItem.y += badItem.speed;
+  if (badItem.y > GAME_HEIGHT) {
+    badItems.splice(i, 1);
   }
+}
 
-  // Draw surprise items (Germ Emoji 🦠)
-  for (var i = 0; i < surpriseItems.length; i++) {
-    var surpriseItem = surpriseItems[i];
-    ctx.font = surpriseItemWidth + "px Arial";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText("🦠", surpriseItem.x + surpriseItemWidth/2, surpriseItem.y + surpriseItemHeight/2);
-    surpriseItem.y += surpriseItem.speed;
-    if (surpriseItem.y > GAME_HEIGHT) {
-      surpriseItems.splice(i, 1);
-    }
+// Draw surprise items (Germ sprite)
+for (var i = 0; i < surpriseItems.length; i++) {
+  var surpriseItem = surpriseItems[i];
+  drawSprite('germ', surpriseItem.x, surpriseItem.y, surpriseItemWidth, surpriseItemHeight);
+  surpriseItem.y += surpriseItem.speed;
+  if (surpriseItem.y > GAME_HEIGHT) {
+    surpriseItems.splice(i, 1);
   }
+}
 
-  // Draw medical items (Medical Helmet Emoji ⛑️)
-  for (var i = 0; i < medicalItems.length; i++) {
-    var medicalItem = medicalItems[i];
-    ctx.font = medicalItemWidth + "px Arial";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText("⛑️", medicalItem.x + medicalItemWidth/2, medicalItem.y + medicalItemHeight/2);
-    medicalItem.y += medicalItem.speed;
-    if (medicalItem.y > GAME_HEIGHT) {
-      medicalItems.splice(i, 1);
-    }
+// Draw medical items (Helmet sprite)
+for (var i = 0; i < medicalItems.length; i++) {
+  var medicalItem = medicalItems[i];
+  drawSprite('helmet', medicalItem.x, medicalItem.y, medicalItemWidth, medicalItemHeight);
+  medicalItem.y += medicalItem.speed;
+  if (medicalItem.y > GAME_HEIGHT) {
+    medicalItems.splice(i, 1);
   }
+}
 
-  // Draw shield items (Shield Emoji 🛡️)
-  for (var i = 0; i < shieldItems.length; i++) {
-    var shieldItem = shieldItems[i];
-    ctx.font = shieldItemWidth + "px Arial";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText("🛡️", shieldItem.x + shieldItemWidth/2, shieldItem.y + shieldItemHeight/2);
-    shieldItem.y += shieldItem.speed;
-    if (shieldItem.y > GAME_HEIGHT) {
-      shieldItems.splice(i, 1);
-    }
+// Draw shield items (Shield sprite)
+for (var i = 0; i < shieldItems.length; i++) {
+  var shieldItem = shieldItems[i];
+  drawSprite('shield', shieldItem.x, shieldItem.y, shieldItemWidth, shieldItemHeight);
+  shieldItem.y += shieldItem.speed;
+  if (shieldItem.y > GAME_HEIGHT) {
+    shieldItems.splice(i, 1);
   }
+}
 
-  // Draw clock items (Clock Emoji 🕐)
-  for (var i = 0; i < clockItems.length; i++) {
-    var clockItem = clockItems[i];
-    ctx.font = clockItemWidth + "px Arial";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText("🕐", clockItem.x + clockItemWidth/2, clockItem.y + clockItemHeight/2);
-    clockItem.y += clockItem.speed;
-    if (clockItem.y > GAME_HEIGHT) {
-      clockItems.splice(i, 1);
-    }
+// Draw clock items (Clock sprite)
+for (var i = 0; i < clockItems.length; i++) {
+  var clockItem = clockItems[i];
+  drawSprite('clock', clockItem.x, clockItem.y, clockItemWidth, clockItemHeight);
+  clockItem.y += clockItem.speed;
+  if (clockItem.y > GAME_HEIGHT) {
+    clockItems.splice(i, 1);
   }
+}
 
-  // Draw nuke items (Fries Emoji 🍟)
-  for (var i = 0; i < nukeItems.length; i++) {
-    var nukeItem = nukeItems[i];
-    ctx.font = nukeItemWidth + "px Arial";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText("🍟", nukeItem.x + nukeItemWidth/2, nukeItem.y + nukeItemHeight/2);
-    nukeItem.y += nukeItem.speed;
-    if (nukeItem.y > GAME_HEIGHT) {
-      nukeItems.splice(i, 1);
-    }
+// Draw nuke items (Fries sprite)
+for (var i = 0; i < nukeItems.length; i++) {
+  var nukeItem = nukeItems[i];
+  drawSprite('fries', nukeItem.x, nukeItem.y, nukeItemWidth, nukeItemHeight);
+  nukeItem.y += nukeItem.speed;
+  if (nukeItem.y > GAME_HEIGHT) {
+    nukeItems.splice(i, 1);
   }
+}
 
-  // Draw fire items (Fire Emoji 🔥)
-  for (var i = 0; i < fireItems.length; i++) {
-    var fireItem = fireItems[i];
-    ctx.font = fireItemWidth + "px Arial";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText("🔥", fireItem.x + fireItemWidth/2, fireItem.y + fireItemHeight/2);
-    fireItem.y += fireItem.speed;
-    if (fireItem.y > GAME_HEIGHT) {
-      fireItems.splice(i, 1);
-    }
+// Draw fire items (Fire sprite)
+for (var i = 0; i < fireItems.length; i++) {
+  var fireItem = fireItems[i];
+  drawSprite('fire', fireItem.x, fireItem.y, fireItemWidth, fireItemHeight);
+  fireItem.y += fireItem.speed;
+  if (fireItem.y > GAME_HEIGHT) {
+    fireItems.splice(i, 1);
   }
+}
 
-  // Draw combo items (Green Star Emoji ⭐ with green tint effect)
-  for (var i = 0; i < comboItems.length; i++) {
-    var comboItem = comboItems[i];
-    ctx.font = comboItemWidth + "px Arial";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText("⭐", comboItem.x + comboItemWidth/2, comboItem.y + comboItemHeight/2);
-    comboItem.y += comboItem.speed;
-    if (comboItem.y > GAME_HEIGHT) {
-      comboItems.splice(i, 1);
-    }
+// Draw combo items (Amulet sprite - blue target)
+for (var i = 0; i < comboItems.length; i++) {
+  var comboItem = comboItems[i];
+  drawSprite('amulet', comboItem.x, comboItem.y, comboItemWidth, comboItemHeight);
+  comboItem.y += comboItem.speed;
+  if (comboItem.y > GAME_HEIGHT) {
+    comboItems.splice(i, 1);
   }
+}
 
-  // Draw gun items (Gun Emoji 🔫 - for boss fight)
-  for (var i = 0; i < gunItems.length; i++) {
-    var gunItem = gunItems[i];
-    ctx.font = gunItemWidth + "px Arial";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText("🔫", gunItem.x + gunItemWidth/2, gunItem.y + gunItemHeight/2);
-    gunItem.y += gunItem.speed;
-    if (gunItem.y > GAME_HEIGHT) {
-      gunItems.splice(i, 1);
-    }
+// Draw gun items (Gun sprite - for boss fight)
+for (var i = 0; i < gunItems.length; i++) {
+  var gunItem = gunItems[i];
+  drawSprite('gun', gunItem.x, gunItem.y, gunItemWidth, gunItemHeight);
+  gunItem.y += gunItem.speed;
+  if (gunItem.y > GAME_HEIGHT) {
+    gunItems.splice(i, 1);
+  }
+}
+  
+// Draw boss (Demon sprite)
+if (bossActive) {
+  // Add stun flash effect
+  if (bossStunned && Math.floor(bossStunTimer / 5) % 2 === 0) {
+    // Flash white when stunned
+    ctx.shadowColor = "white";
+    ctx.shadowBlur = 20;
   }
   
-  // Draw boss (Robot Emoji 🤖)
-  if (bossActive) {
-    // Add stun flash effect
-    if (bossStunned && Math.floor(bossStunTimer / 5) % 2 === 0) {
-      // Flash white when stunned
-      ctx.shadowColor = "white";
-      ctx.shadowBlur = 20;
-    }
-    
-    // Apply shake effect during defeat
-    var shakeX = 0;
-    var shakeY = 0;
-    if (bossShakeAmount > 0) {
-      shakeX = (Math.random() - 0.5) * bossShakeAmount * 2;
-      shakeY = (Math.random() - 0.5) * bossShakeAmount * 2;
-    }
-    
-    ctx.font = bossWidth + "px Arial";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText("🤖", bossX + bossWidth/2 + shakeX, bossY + bossHeight/2 + shakeY);
-    ctx.shadowBlur = 0;  // Reset shadow
+  // Apply shake effect during defeat
+  var shakeX = 0;
+  var shakeY = 0;
+  if (bossShakeAmount > 0) {
+    shakeX = (Math.random() - 0.5) * bossShakeAmount * 2;
+    shakeY = (Math.random() - 0.5) * bossShakeAmount * 2;
+  }
+  
+  drawSprite('demon', bossX + shakeX, bossY + shakeY, bossWidth, bossHeight);
+  ctx.shadowBlur = 0;  // Reset shadow
     
     // Draw boss health bar only if alive
     if (bossHealth > 0 && !bossDefeated) {
@@ -1156,14 +1153,10 @@ function update() {
       ctx.strokeText("BOSS:", 10, 50);
       ctx.fillText("BOSS:", 10, 50);
       
-      // Draw target emojis for health
-      ctx.font = "30px Arial";
-      for (var i = 0; i < bossHealth; i++) {
-        ctx.fillText("🎯", 90 + (i * 40), 50);
-      }
-      ctx.textAlign = "center";  // Reset for boss rendering
-    }
-  }
+// Draw amulet sprites for health
+for (var i = 0; i < bossHealth; i++) {
+  drawSprite('amulet', 90 + (i * 40) - 15, 35, 30, 30);
+}
   
   // Draw boss beams
   for (var i = 0; i < bossBeams.length; i++) {
@@ -1397,8 +1390,8 @@ function update() {
   ctx.strokeStyle = "black";
   ctx.lineWidth = 2;
   ctx.textAlign = "center";
-  ctx.strokeText("V6.9 Created by BHaleyArt", GAME_WIDTH / 2, GAME_HEIGHT - 10);
-  ctx.fillText("V6.9 Created by BHaleyArt", GAME_WIDTH / 2, GAME_HEIGHT - 10);
+  ctx.strokeText("V7 Created by BHaleyArt", GAME_WIDTH / 2, GAME_HEIGHT - 10);
+  ctx.fillText("V7 Created by BHaleyArt", GAME_WIDTH / 2, GAME_HEIGHT - 10);
   ctx.textAlign = "left";
   
   // Draw damage flash effect (red screen overlay)
