@@ -123,8 +123,8 @@ var bossStunned = false;  // Boss stun state
 var bossStunTimer = 0;  // Stun duration
 var bossStunDuration = 30;  // 0.5 seconds at 60fps
 var bossDefeated = false;  // Boss defeat state
-var bossDeathTimer = 0;  // Death animation timer
-var bossDeathDuration = 90;  // 1.5 seconds death animation at 60fps
+var bossDefeatTimer = 0;  // Defeat animation timer
+var bossDefeatDuration = 90;  // 1.5 seconds defeat animation at 60fps
 var bossShakeAmount = 0;  // Shake intensity
 var gunItems = [];  // Special gun power-up for boss fight
 var gunItemWidth = 40;
@@ -1205,7 +1205,7 @@ function update() {
 
   // Draw shield line effect (80 pixels above player)
   if (shieldActive) {
-    var shieldY = playerY - 370;
+    var shieldY = playerY - 80;
     ctx.strokeStyle = "cyan";
     ctx.lineWidth = 4;
     ctx.shadowColor = "cyan";
@@ -1235,7 +1235,7 @@ function update() {
   
   // Draw fire line effect (80 pixels above player) - Auto-collects burgers only
   if (fireActive) {
-    var fireY = playerY - 380;
+    var fireY = playerY - 80;
     ctx.strokeStyle = "red";
     ctx.lineWidth = 4;
     ctx.shadowColor = "red";
@@ -1265,7 +1265,7 @@ function update() {
   
   // Draw combo line effect (80 pixels above player) - GREEN combines Shield + Fire
   if (comboActive) {
-    var comboY = playerY - 365;
+    var comboY = playerY - 80;
     ctx.strokeStyle = "lime";  // Bright green
     ctx.lineWidth = 5;  // Slightly thicker than others
     ctx.shadowColor = "lime";
@@ -1402,8 +1402,8 @@ function update() {
   ctx.strokeStyle = "black";
   ctx.lineWidth = 2;
   ctx.textAlign = "center";
-  ctx.strokeText("V6.7 Created by BHaleyArt", GAME_WIDTH / 2, GAME_HEIGHT - 10);
-  ctx.fillText("V6.7 Created by BHaleyArt", GAME_WIDTH / 2, GAME_HEIGHT - 10);
+  ctx.strokeText("Created by BHaleyArt", GAME_WIDTH / 2, GAME_HEIGHT - 10);
+  ctx.fillText("Created by BHaleyArt", GAME_WIDTH / 2, GAME_HEIGHT - 10);
   ctx.textAlign = "left";
   
   // Draw damage flash effect (red screen overlay)
@@ -1432,7 +1432,7 @@ function update() {
     ctx.drawImage(
       gameOverImage,
       GAME_WIDTH / 2 - 150,
-      GAME_HEIGHT / 2 - 240,  // Raised from -150 to -200
+      GAME_HEIGHT / 2 - 200,  // Raised from -150 to -200
       300,
       300
     );
@@ -1446,7 +1446,7 @@ function update() {
     ctx.drawImage(
       gameOverPileImage,
       -70,
-      GAME_HEIGHT - 500,  // Raised from -480 to -530
+      GAME_HEIGHT - 530,  // Raised from -480 to -530
       600,
       600
     );
@@ -1760,7 +1760,7 @@ restartButton.addEventListener("click", function () {
 
 // Add click event listener to URL button
 watchButton.addEventListener("click", function() {
-  window.location.href = ("https://youtube.com/@bhaleyart");
+  window.location.href = ("https://bombpop.link/bigheadbillions");
 });
 
 // Handle mouse movement (PC)
