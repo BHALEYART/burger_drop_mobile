@@ -693,7 +693,7 @@ function checkCollision() {
       
       // Trigger flash effect and spawn delay
       nukeFlash = 1.0;
-      spawnDelay = 2.0;  // 2 seconds delay
+      spawnDelay = 0.2;  // 2 seconds delay
       
       nukeItems.splice(i, 1);
     }
