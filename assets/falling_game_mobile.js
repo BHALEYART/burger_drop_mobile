@@ -1760,7 +1760,7 @@ restartButton.addEventListener("click", function () {
 
 // Add click event listener to URL button
 watchButton.addEventListener("click", function() {
-  window.location.href = ("https://bombpop.link/bigheadbillions");
+  window.location.href = ("https://youtube.com/@bhaleyart");
 });
 
 // Handle mouse movement (PC)
