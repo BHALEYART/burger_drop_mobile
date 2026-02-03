@@ -743,14 +743,16 @@ function checkCollision() {
       playerY + playerHeight - hitboxMargin > gunItem.y + hitboxMargin
     ) {
       // Automatically damage boss when gun collected
-      if (bossActive && bossHealth > 0) {
+      if (bossActive && bossHealth > 0 && !bossDefeated) {
         bossHealth--;
         score += 500;  // Bonus for hitting boss
         safePlayAudio(badItemSound);  // Hit sound
         
-        // Stun boss briefly
-        bossStunned = true;
-        bossStunTimer = bossStunDuration;
+        // Only stun if boss still has health remaining
+        if (bossHealth > 0) {
+          bossStunned = true;
+          bossStunTimer = bossStunDuration;
+        }
       }
       gunItems.splice(i, 1);
     }
@@ -1400,8 +1402,8 @@ function update() {
   ctx.strokeStyle = "black";
   ctx.lineWidth = 2;
   ctx.textAlign = "center";
-  ctx.strokeText("V6.6 Created by BHaleyArt", GAME_WIDTH / 2, GAME_HEIGHT - 10);
-  ctx.fillText("V6.6 Created by BHaleyArt", GAME_WIDTH / 2, GAME_HEIGHT - 10);
+  ctx.strokeText("V6.7 Created by BHaleyArt", GAME_WIDTH / 2, GAME_HEIGHT - 10);
+  ctx.fillText("V6.7 Created by BHaleyArt", GAME_WIDTH / 2, GAME_HEIGHT - 10);
   ctx.textAlign = "left";
   
   // Draw damage flash effect (red screen overlay)
@@ -1691,6 +1693,9 @@ function update() {
     bossDefeatTimer = bossDefeatDuration;
     // Clear all lasers immediately
     bossBeams = [];
+    // Clear stun state
+    bossStunned = false;
+    bossStunTimer = 0;
     // Award big bonus
     score += 5000;
     // Reset speed to 10 if higher
