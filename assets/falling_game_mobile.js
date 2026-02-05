@@ -778,11 +778,11 @@ if (bossActive && bossHealth > 0) {
     var randomNum = Math.random();
     var spawnableWidth = GAME_WIDTH - SCREEN_MARGIN_LEFT - SCREEN_MARGIN_RIGHT;
     
-    if (randomNum < 0.85) {  // 85% burgers
+    if (randomNum < 0.91) {  // 91% burgers
       // ... burger spawn code
-    } else if (randomNum < 0.90) {  // 5% clock
+    } else if (randomNum < 0.92) {  // 1% clock
       // ... clock spawn code
-    } else {  // 10% gun ← This is the gun spawn rate!
+    } else {  // 8% gun ← This is the gun spawn rate!
       var gunItem = {
         x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - gunItemWidth),
         y: -gunItemHeight,
