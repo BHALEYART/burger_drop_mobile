@@ -772,32 +772,27 @@ function resetItems() {
     return;  // Don't spawn anything during boss defeat
   }
   
-  // During boss fight: only spawn burgers, clock, and gun
-  if (bossActive && bossHealth > 0) {
-    if (goodItems.length + clockItems.length + gunItems.length < 6) {  // Reduced max items during boss
-      var randomNum = Math.random();
-      var spawnableWidth = GAME_WIDTH - SCREEN_MARGIN_LEFT - SCREEN_MARGIN_RIGHT;
-      
-      if (randomNum < 0.85) {  // 85% burgers
-  // ... burger spawn code
-} else if (randomNum < 0.88) {  // 3% clock (0.85 + 0.03 = 0.88)
-  var clockItem = {
-    x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - clockItemWidth),
-    y: -clockItemHeight,
-    speed: itemSpeed
-  };
-  clockItems.push(clockItem);
-} else if (randomNum < 0.93) {  // 5% gun (0.88 + 0.05 = 0.93)
-  var gunItem = {
-    x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - gunItemWidth),
-    y: -gunItemHeight,
-    speed: itemSpeed
-  };
-  gunItems.push(gunItem);
-}
+// During boss fight: only spawn burgers, clock, and gun
+if (bossActive && bossHealth > 0) {
+  if (goodItems.length + clockItems.length + gunItems.length < 6) {
+    var randomNum = Math.random();
+    var spawnableWidth = GAME_WIDTH - SCREEN_MARGIN_LEFT - SCREEN_MARGIN_RIGHT;
+    
+    if (randomNum < 0.85) {  // 85% burgers
+      // ... burger spawn code
+    } else if (randomNum < 0.90) {  // 5% clock
+      // ... clock spawn code
+    } else {  // 10% gun ← This is the gun spawn rate!
+      var gunItem = {
+        x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - gunItemWidth),
+        y: -gunItemHeight,
+        speed: itemSpeed
+      };
+      gunItems.push(gunItem);
     }
-    return;  // Exit early during boss fight
   }
+  return;
+}
   
   if (goodItems.length + badItems.length + surpriseItems.length + shieldItems.length + clockItems.length + nukeItems.length + fireItems.length + comboItems.length < maxItems) {
     var randomNum = Math.random();
@@ -1397,8 +1392,8 @@ function update() {
   ctx.strokeStyle = "black";
   ctx.lineWidth = 2;
   ctx.textAlign = "center";
-  ctx.strokeText("V6.9 Created by BHaleyArt", GAME_WIDTH / 2, GAME_HEIGHT - 10);
-  ctx.fillText("V6.9 Created by BHaleyArt", GAME_WIDTH / 2, GAME_HEIGHT - 10);
+  ctx.strokeText("V6.91 Created by BHaleyArt", GAME_WIDTH / 2, GAME_HEIGHT - 10);
+  ctx.fillText("V6.91 Created by BHaleyArt", GAME_WIDTH / 2, GAME_HEIGHT - 10);
   ctx.textAlign = "left";
   
   // Draw damage flash effect (red screen overlay)
