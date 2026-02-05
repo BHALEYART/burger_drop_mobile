@@ -55,7 +55,7 @@ var gunItems = [];     // Gun items for boss fight
 var fireItems = [];    // New fire item array
 var maxItems = 8;
 var itemSpeed = 2;
-var maxFallSpeed = 22;  // Changed from 24 to 22
+var maxFallSpeed = 24;  // Changed from 22 to 24
 var fallAcceleration = 0.004;
 var spawnCounter = 1;
 var score = 0;
@@ -778,11 +778,11 @@ if (bossActive && bossHealth > 0) {
     var randomNum = Math.random();
     var spawnableWidth = GAME_WIDTH - SCREEN_MARGIN_LEFT - SCREEN_MARGIN_RIGHT;
     
-    if (randomNum < 0.91) {  // 91% burgers
+    if (randomNum < 0.85) {  // 85% burgers
       // ... burger spawn code
-    } else if (randomNum < 0.92) {  // 1% clock
+    } else if (randomNum < 0.90) {  // 5% clock
       // ... clock spawn code
-    } else {  // 8% gun ← This is the gun spawn rate!
+    } else {  // 10% gun ← This is the gun spawn rate!
       var gunItem = {
         x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - gunItemWidth),
         y: -gunItemHeight,
@@ -1392,8 +1392,8 @@ function update() {
   ctx.strokeStyle = "black";
   ctx.lineWidth = 2;
   ctx.textAlign = "center";
-  ctx.strokeText("V6.91 Created by BHaleyArt", GAME_WIDTH / 2, GAME_HEIGHT - 10);
-  ctx.fillText("V6.91 Created by BHaleyArt", GAME_WIDTH / 2, GAME_HEIGHT - 10);
+  ctx.strokeText("V6.92 Created by BHaleyArt", GAME_WIDTH / 2, GAME_HEIGHT - 10);
+  ctx.fillText("V6.92 Created by BHaleyArt", GAME_WIDTH / 2, GAME_HEIGHT - 10);
   ctx.textAlign = "left";
   
   // Draw damage flash effect (red screen overlay)
