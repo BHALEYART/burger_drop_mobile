@@ -778,11 +778,21 @@ if (bossActive && bossHealth > 0) {
     var randomNum = Math.random();
     var spawnableWidth = GAME_WIDTH - SCREEN_MARGIN_LEFT - SCREEN_MARGIN_RIGHT;
     
-    if (randomNum < 0.85) {  // 85% burgers
-      // ... burger spawn code
-    } else if (randomNum < 0.90) {  // 5% clock
-      // ... clock spawn code
-    } else {  // 10% gun ← This is the gun spawn rate!
+    if (randomNum < 0.91) {  // 91% burgers
+    var goodItem = {
+    x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - goodItemWidth),
+    y: -goodItemHeight,
+    speed: itemSpeed
+  };
+  goodItems.push(goodItem);
+    } else if (randomNum < 0.93) {  // 2% clock
+      var clockItem = {
+    x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - clockItemWidth),
+    y: -clockItemHeight,
+    speed: itemSpeed
+  };
+  clockItems.push(clockItem);
+    } else {  // 7% gun ← This is the gun spawn rate!
       var gunItem = {
         x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - gunItemWidth),
         y: -gunItemHeight,
@@ -1392,8 +1402,8 @@ function update() {
   ctx.strokeStyle = "black";
   ctx.lineWidth = 2;
   ctx.textAlign = "center";
-  ctx.strokeText("V6.92 Created by BHaleyArt", GAME_WIDTH / 2, GAME_HEIGHT - 10);
-  ctx.fillText("V6.92 Created by BHaleyArt", GAME_WIDTH / 2, GAME_HEIGHT - 10);
+  ctx.strokeText("V6.93 Created by BHaleyArt", GAME_WIDTH / 2, GAME_HEIGHT - 10);
+  ctx.fillText("V6.93 Created by BHaleyArt", GAME_WIDTH / 2, GAME_HEIGHT - 10);
   ctx.textAlign = "left";
   
   // Draw damage flash effect (red screen overlay)
