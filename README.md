@@ -1,4 +1,4 @@
-# 🍔 Burger Drop V6.93 Beta
+# 🍔 Burger Drop V6.94 Beta
 
 A fast-paced arcade game where you catch falling burgers while avoiding trash! Play on mobile with tilt/drag controls or on PC with your mouse.
 
