@@ -1310,6 +1310,7 @@ function update() {
   if(score <= 0) {
     score = 0; 
   }
+  window.parent.postMessage({ type: 'bhb:score', score: Math.floor(score) }, '*');
 
   // Draw Speed with lightning emoji - Updated font style and MAX indicator
   ctx.font = "bold 28px 'Arial Black', Arial, sans-serif";
