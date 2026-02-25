@@ -27,15 +27,14 @@ var playerWidth = 70;
 var playerHeight = 106;
 var goodItemWidth = 40;
 var goodItemHeight = 40;
-var badItemWidth = 60;  // Reduced from 80 to 60
-var badItemHeight = 60;  // Reduced from 80 to 60
-var surpriseItemWidth = 40;  // Same as burger
-var surpriseItemHeight = 40;  // Same as burger
-var medicalItemWidth = 40;  // Same as burger (was 50)
-var medicalItemHeight = 40;  // Same as burger (was 50)
+var badItemWidth = 60;
+var badItemHeight = 60;
+var surpriseItemWidth = 40;
+var surpriseItemHeight = 40;
+var medicalItemWidth = 40;
+var medicalItemHeight = 40;
 var heartWidth = 30;
 var heartHeight = 30;
-// Screen margins for boundaries
 var SCREEN_MARGIN_LEFT = 10;
 var SCREEN_MARGIN_RIGHT = 10;
 var SCREEN_MARGIN_BOTTOM = 50;
@@ -46,16 +45,16 @@ var goodItems = [];
 var badItems = [];
 var surpriseItems = [];
 var medicalItems = [];
-var shieldItems = [];  // New shield item array
-var clockItems = [];   // New clock item array
-var nukeItems = [];    // New nuke item array
-var fireItems = [];    // New fire item array
-var comboItems = [];   // New combo item array (shield + fire)
-var gunItems = [];     // Gun items for boss fight
-var fireItems = [];    // New fire item array
+var shieldItems = [];
+var clockItems = [];
+var nukeItems = [];
+var fireItems = [];
+var comboItems = [];
+var gunItems = [];
+var fireItems = [];
 var maxItems = 8;
 var itemSpeed = 2;
-var maxFallSpeed = 24;  // Changed from 22 to 24
+var maxFallSpeed = 24;
 var fallAcceleration = 0.004;
 var spawnCounter = 1;
 var score = 0;
@@ -68,10 +67,9 @@ var gameStarted = false;
 var audioInitialized = false;
 var musicMuted = false;
 var sfxMuted = false;
-var damageFlash = 0;  // New variable for damage flash effect
-var damageFlashDecay = 0.05;  // How fast the flash fades
+var damageFlash = 0;
+var damageFlashDecay = 0.05;
 
-// New power-up variables
 var shieldActive = false;
 var shieldDuration = 10;
 var shieldTimer = 0;
@@ -81,7 +79,7 @@ var clockItemWidth = 40;
 var clockItemHeight = 40;
 var nukeItemWidth = 40;
 var nukeItemHeight = 40;
-var fireActive = false;  // New fire power-up
+var fireActive = false;
 var fireDuration = 10;
 var fireTimer = 0;
 var fireItemWidth = 40;
@@ -91,52 +89,53 @@ var fireDuration = 10;
 var fireTimer = 0;
 var fireItemWidth = 40;
 var fireItemHeight = 40;
-var comboActive = false;  // Combo power (shield + fire combined)
+var comboActive = false;
 var comboDuration = 10;
 var comboTimer = 0;
 var comboItemWidth = 40;
 var comboItemHeight = 40;
-var nukeFlash = 0;  // Nuke flash effect
-var nukeFlashDecay = 0.08;  // Faster fade than damage flash
-var spawnDelay = 0;  // Delay for spawning items after nuke
+var nukeFlash = 0;
+var nukeFlashDecay = 0.08;
+var spawnDelay = 0;
 
-// Boss fight variables
 var bossCountdownStarted = false;
-var bossCountdownTimer = 10;  // 10 seconds countdown
+var bossCountdownTimer = 10;
 var bossActive = false;
-var bossX = GAME_WIDTH / 2 - 40;  // Center, boss is 80px wide
-var bossY = -100;  // Start above screen
-var bossTargetY = 100;  // Float at 100px from top (about 380px above player at bottom)
+var bossX = GAME_WIDTH / 2 - 40;
+var bossY = -100;
+var bossTargetY = 100;
 var bossWidth = 80;
 var bossHeight = 80;
-var bossHealth = 4;  // 4 targets (increased from 3)
+var bossHealth = 4;
 var bossMaxHealth = 4;
-var bossDirection = 1;  // 1 = right, -1 = left
+var bossDirection = 1;
 var bossSpeed = 2;
 var bossShootTimer = 0;
-var bossShootInterval = 90;  // Shoot every 90 frames (~1.5 seconds at 60fps)
-var bossBeams = [];  // Array of laser beams
-var bossAttackPhase = 1;  // 1 = side-to-side, 2 = wide laser, 3 = fast movement
+var bossShootInterval = 90;
+var bossBeams = [];
+var bossAttackPhase = 1;
 var bossPhaseTimer = 0;
-var bossPhaseDuration = 300;  // 5 seconds per phase (300 frames at 60fps)
-var bossStunned = false;  // Boss stun state
-var bossStunTimer = 0;  // Stun duration
-var bossStunDuration = 30;  // 0.5 seconds at 60fps
-var bossDefeated = false;  // Boss defeat state
-var bossDefeatTimer = 0;  // Defeat animation timer
-var bossDefeatDuration = 90;  // 1.5 seconds defeat animation at 60fps
-var bossShakeAmount = 0;  // Shake intensity
-var gunItems = [];  // Special gun power-up for boss fight
+var bossPhaseDuration = 300;
+var bossStunned = false;
+var bossStunTimer = 0;
+var bossStunDuration = 30;
+var bossDefeated = false;
+var bossDefeatTimer = 0;
+var bossDefeatDuration = 90;
+var bossShakeAmount = 0;
+var gunItems = [];
 var gunItemWidth = 40;
 var gunItemHeight = 40;
-var hasGun = false;  // Player has gun equipped
-var developerMode = false;  // Developer mode toggle
+var hasGun = false;
+var developerMode = false;
+
+// Delta-time tracking — normalizes all movement to 60fps regardless of display refresh rate
+var lastTime = 0;
 
 // Device detection
 var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-// Tilt control variables
-var tiltEnabled = isMobile; // Default to tilt on mobile
+var tiltEnabled = isMobile;
 var tiltCalibrated = false;
 var tiltCenterGamma = 0;
 var tiltSensitivity = 3.5;
@@ -159,7 +158,6 @@ lowScoreSound.volume = 0.7;
 var highScoreSound = new Audio("assets/high_score_gameover.mp3");
 highScoreSound.volume = 0.7;
 
-// Preload audio to avoid delays
 function preloadAudio() {
   var audioFiles = [backgroundMusic, immuneMusic, goodItemSound, badItemSound, lowScoreSound, highScoreSound];
   audioFiles.forEach(function(audio) {
@@ -167,7 +165,6 @@ function preloadAudio() {
   });
 }
 
-// Initialize audio after user interaction
 function initializeAudio() {
   if (!audioInitialized) {
     var audioFiles = [backgroundMusic, immuneMusic, goodItemSound, badItemSound, lowScoreSound, highScoreSound];
@@ -186,13 +183,10 @@ function initializeAudio() {
   }
 }
 
-// Safe audio play function with promise handling
 function safePlayAudio(audio) {
   if (audioInitialized) {
-    // Check if this is background music or SFX
     var isMusic = (audio === backgroundMusic || audio === immuneMusic);
     var isMuted = isMusic ? musicMuted : sfxMuted;
-    
     if (!isMuted) {
       var playPromise = audio.play();
       if (playPromise !== undefined) {
@@ -204,7 +198,6 @@ function safePlayAudio(audio) {
   }
 }
 
-// Style start button
 startButton.innerText = isMobile ? "🎮 TAP TO START 🎮" : "🍔 Start 🍔";
 startButton.style.position = "absolute";
 startButton.style.left = "50%";
@@ -221,7 +214,6 @@ startButton.style.fontWeight = "bold";
 startButton.style.zIndex = "9999";
 startButton.style.cursor = "pointer";
 
-// Create start menu title
 var startTitle = document.createElement("div");
 startTitle.innerText = "BURGER DROP";
 startTitle.style.position = "absolute";
@@ -238,11 +230,10 @@ startTitle.style.textAlign = "center";
 document.body.appendChild(startTitle);
 document.body.appendChild(startButton);
 
-// Style buttons
 restartButton.innerText = "Try Again?";
 restartButton.style.position = "absolute";
 restartButton.style.left = "50%";
-restartButton.style.top = "60%";  // Raised from 70% to 60%
+restartButton.style.top = "60%";
 restartButton.style.transform = "translate(-50%, -50%)";
 restartButton.style.width = "120px";
 restartButton.style.height = "45px";
@@ -257,7 +248,7 @@ restartButton.style.fontSize = "16px";
 watchButton.innerText = "BHB Links";
 watchButton.style.position = "absolute";
 watchButton.style.left = "50%";
-watchButton.style.top = "70%";  // Raised from 80% to 70%
+watchButton.style.top = "70%";
 watchButton.style.transform = "translate(-50%, -50%)";
 watchButton.style.width = "120px";
 watchButton.style.height = "45px";
@@ -269,7 +260,6 @@ watchButton.style.zIndex = "9999";
 watchButton.style.cursor = "pointer";
 watchButton.style.fontSize = "16px";
 
-// Music mute button
 musicMuteButton.innerText = "🎵";
 musicMuteButton.style.position = "absolute";
 musicMuteButton.style.left = "10px";
@@ -286,7 +276,6 @@ musicMuteButton.style.fontSize = "20px";
 musicMuteButton.style.display = "none";
 musicMuteButton.title = "Toggle Music";
 
-// SFX mute button
 sfxMuteButton.innerText = "🔊";
 sfxMuteButton.style.position = "absolute";
 sfxMuteButton.style.left = "10px";
@@ -303,7 +292,6 @@ sfxMuteButton.style.fontSize = "20px";
 sfxMuteButton.style.display = "none";
 sfxMuteButton.title = "Toggle Sound Effects";
 
-// Control toggle button (only on mobile)
 if (isMobile) {
   controlToggleButton.innerText = "📱 Tilt";
   controlToggleButton.style.position = "absolute";
@@ -321,7 +309,6 @@ if (isMobile) {
   controlToggleButton.style.display = "none";
 }
 
-// Load images
 gameOverPileImage.src = "assets/game_over_pile.png";
 playerImage.src = "assets/player.png";
 playerImageOriginal.src = "assets/player_original.png";
@@ -333,12 +320,10 @@ heartImage.src = "assets/heart.png";
 gameOverImage.src = "assets/game_over.png";
 menuOverlayImage.src = "assets/menu_shader.png";
 
-// Image loading counter
 var imagesLoaded = 0;
 var totalImages = 10;
 var allImagesLoaded = false;
 
-// Function to check if all images are loaded
 function imageLoaded() {
   imagesLoaded++;
   if (imagesLoaded === totalImages) {
@@ -347,7 +332,6 @@ function imageLoaded() {
   }
 }
 
-// Add load event listeners to all images
 gameOverPileImage.onload = imageLoaded;
 playerImage.onload = imageLoaded;
 playerImageOriginal.onload = imageLoaded;
@@ -359,25 +343,17 @@ heartImage.onload = imageLoaded;
 gameOverImage.onload = imageLoaded;
 menuOverlayImage.onload = imageLoaded;
 
-// Preload audio files
 preloadAudio();
 
-// Set fixed canvas size
 function setCanvasSize() {
   canvas.width = GAME_WIDTH;
   canvas.height = GAME_HEIGHT;
-  
-  // Enable image smoothing for crisp rendering
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
-  
-  // Center canvas on screen with CSS
   canvas.style.maxWidth = "100%";
   canvas.style.maxHeight = "100vh";
   canvas.style.width = GAME_WIDTH + "px";
   canvas.style.height = GAME_HEIGHT + "px";
-  
-  // On mobile, scale to fit screen while maintaining aspect ratio
   if (isMobile) {
     var scale = Math.min(
       window.innerWidth / GAME_WIDTH,
@@ -388,46 +364,36 @@ function setCanvasSize() {
   }
 }
 
-// Start game function
 function startGame() {
   if (!gameStarted) {
     gameStarted = true;
     initializeAudio();
     startButton.style.display = "none";
-    startTitle.style.display = "none";  // Hide title when game starts
-    
-    // Show mute buttons
+    startTitle.style.display = "none";
     musicMuteButton.style.display = "block";
     sfxMuteButton.style.display = "block";
     document.body.appendChild(musicMuteButton);
     document.body.appendChild(sfxMuteButton);
-    
     if (isMobile) {
       controlToggleButton.style.display = "block";
       document.body.appendChild(controlToggleButton);
-      // Enable tilt controls by default on mobile
       if (tiltEnabled) {
         requestOrientationPermission();
       }
     }
-    
-    // Start background music after a short delay
     setTimeout(function() {
       if (!musicMuted) {
         safePlayAudio(backgroundMusic);
       }
     }, 500);
-    
-    // Start the game loop
     resetItems();
-    update();
+    // Use requestAnimationFrame so timestamp flows into update() correctly
+    requestAnimationFrame(update);
   }
 }
 
-// Start button listener
 startButton.addEventListener("click", startGame);
 
-// Music mute button listener
 musicMuteButton.addEventListener("click", function() {
   musicMuted = !musicMuted;
   if (musicMuted) {
@@ -446,7 +412,6 @@ musicMuteButton.addEventListener("click", function() {
   }
 });
 
-// SFX mute button listener
 sfxMuteButton.addEventListener("click", function() {
   sfxMuted = !sfxMuted;
   if (sfxMuted) {
@@ -458,7 +423,6 @@ sfxMuteButton.addEventListener("click", function() {
   }
 });
 
-// Request device orientation permission (required for iOS 13+)
 function requestOrientationPermission() {
   if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
     DeviceOrientationEvent.requestPermission()
@@ -478,15 +442,12 @@ function requestOrientationPermission() {
   }
 }
 
-// Enable tilt controls
 function enableTiltControls() {
   tiltEnabled = true;
   tiltCalibrated = false;
   controlToggleButton.innerText = "📱 Tilt";
   controlToggleButton.style.backgroundColor = "rgba(144, 238, 144, 0.8)";
-  
   window.addEventListener('deviceorientation', handleTilt);
-  
   setTimeout(function() {
     if (!tiltCalibrated) {
       tiltCenterGamma = 0;
@@ -495,7 +456,6 @@ function enableTiltControls() {
   }, 500);
 }
 
-// Disable tilt controls
 function disableTiltControls() {
   tiltEnabled = false;
   controlToggleButton.innerText = "👆 Drag";
@@ -503,37 +463,28 @@ function disableTiltControls() {
   window.removeEventListener('deviceorientation', handleTilt);
 }
 
-// Handle tilt input
 function handleTilt(event) {
   if (!tiltEnabled || isGameOver || !gameStarted) return;
-  
   var gamma = event.gamma;
-  
   if (!tiltCalibrated) {
     tiltCenterGamma = gamma;
     tiltCalibrated = true;
   }
-  
   var relativeTilt = gamma - tiltCenterGamma;
   relativeTilt = Math.max(-maxTiltAngle, Math.min(maxTiltAngle, relativeTilt));
-  
   var tiltRatio = relativeTilt / maxTiltAngle;
   targetPlayerX = (GAME_WIDTH / 2) + (tiltRatio * (GAME_WIDTH / 2) * tiltSensitivity);
-  
-  // Constrain to screen boundaries with margins
   targetPlayerX = Math.max(SCREEN_MARGIN_LEFT, Math.min(GAME_WIDTH - playerWidth - SCREEN_MARGIN_RIGHT, targetPlayerX));
 }
 
-// Update player position with smoothing
 function updatePlayerPosition() {
   if (tiltEnabled && !isGameOver && gameStarted) {
-    playerX += (targetPlayerX - playerX) * tiltSmoothing;
-    // Ensure constraints are enforced even during smoothing
+    // dt is captured in the outer update() scope via closure — see update()
+    playerX += (targetPlayerX - playerX) * Math.min(tiltSmoothing * _dt, 1);
     playerX = Math.max(SCREEN_MARGIN_LEFT, Math.min(GAME_WIDTH - playerWidth - SCREEN_MARGIN_RIGHT, playerX));
   }
 }
 
-// Toggle between touch and tilt controls
 if (isMobile) {
   controlToggleButton.addEventListener("click", function() {
     if (!tiltEnabled) {
@@ -544,11 +495,9 @@ if (isMobile) {
   });
 }
 
-// Handle player-item collision
 function checkCollision() {
-  // Hitbox margins - make hitboxes 4 pixels smaller on each side (8 total per dimension)
   var hitboxMargin = 4;
-  
+
   for (var i = 0; i < goodItems.length; i++) {
     var goodItem = goodItems[i];
     if (
@@ -557,15 +506,9 @@ function checkCollision() {
       playerY + hitboxMargin < goodItem.y + goodItemHeight - hitboxMargin &&
       playerY + playerHeight - hitboxMargin > goodItem.y + hitboxMargin
     ) {
-      // Increased points at MAX speed
       var pointMultiplier = itemSpeed >= maxFallSpeed ? 25 : 10;
       var points = pointMultiplier * itemSpeed;
-      
-      // Triple points if passed through shield
-      if (goodItem.shieldTripled) {
-        points *= 3;
-      }
-      
+      if (goodItem.shieldTripled) { points *= 3; }
       score += points;
       safePlayAudio(goodItemSound);
       goodItems.splice(i, 1);
@@ -585,7 +528,7 @@ function checkCollision() {
         score -= 50;
         safePlayAudio(badItemSound);
         maxItems += 1;
-        damageFlash = 1.0;  // Trigger full damage flash
+        damageFlash = 1.0;
       }
       badItems.splice(i, 1);
     }
@@ -630,8 +573,7 @@ function checkCollision() {
       surpriseItemCounter++;
     }
   }
-  
-  // Shield item collision
+
   for (var i = 0; i < shieldItems.length; i++) {
     var shieldItem = shieldItems[i];
     if (
@@ -647,8 +589,7 @@ function checkCollision() {
       shieldItems.splice(i, 1);
     }
   }
-  
-  // Clock item collision
+
   for (var i = 0; i < clockItems.length; i++) {
     var clockItem = clockItems[i];
     if (
@@ -657,14 +598,13 @@ function checkCollision() {
       playerY + hitboxMargin < clockItem.y + clockItemHeight - hitboxMargin &&
       playerY + playerHeight - hitboxMargin > clockItem.y + hitboxMargin
     ) {
-      itemSpeed = Math.max(2, itemSpeed - 3);  // Reduce speed by 3, minimum 2
+      itemSpeed = Math.max(2, itemSpeed - 3);
       score += 100;
       safePlayAudio(goodItemSound);
       clockItems.splice(i, 1);
     }
   }
-  
-  // Nuke item collision
+
   for (var i = 0; i < nukeItems.length; i++) {
     var nukeItem = nukeItems[i];
     if (
@@ -673,12 +613,10 @@ function checkCollision() {
       playerY + hitboxMargin < nukeItem.y + nukeItemHeight - hitboxMargin &&
       playerY + playerHeight - hitboxMargin > nukeItem.y + hitboxMargin
     ) {
-      // Clear all items and award double points for burgers
       for (var j = 0; j < goodItems.length; j++) {
         var pointMultiplier = itemSpeed >= maxFallSpeed ? 25 : 10;
-        score += (pointMultiplier * itemSpeed) * 2;  // Double points
+        score += (pointMultiplier * itemSpeed) * 2;
       }
-      // Clear all arrays
       goodItems = [];
       badItems = [];
       surpriseItems = [];
@@ -686,20 +624,15 @@ function checkCollision() {
       shieldItems = [];
       clockItems = [];
       fireItems = [];
-      // Reduce speed by 5, minimum 2
       itemSpeed = Math.max(2, itemSpeed - 5);
-      score += 200;  // Bonus for using nuke
+      score += 200;
       safePlayAudio(goodItemSound);
-      
-      // Trigger flash effect and spawn delay
       nukeFlash = 1.0;
-      spawnDelay = 0.2;  // 2 seconds delay
-      
+      spawnDelay = 0.2;
       nukeItems.splice(i, 1);
     }
   }
-  
-  // Fire item collision
+
   for (var i = 0; i < fireItems.length; i++) {
     var fireItem = fireItems[i];
     if (
@@ -715,8 +648,7 @@ function checkCollision() {
       fireItems.splice(i, 1);
     }
   }
-  
-  // Combo item collision (Shield + Fire combined)
+
   for (var i = 0; i < comboItems.length; i++) {
     var comboItem = comboItems[i];
     if (
@@ -727,13 +659,12 @@ function checkCollision() {
     ) {
       comboActive = true;
       comboTimer = comboDuration;
-      score += 200;  // Higher bonus for combo
+      score += 200;
       safePlayAudio(goodItemSound);
       comboItems.splice(i, 1);
     }
   }
-  
-  // Gun item collision (for boss fight)
+
   for (var i = 0; i < gunItems.length; i++) {
     var gunItem = gunItems[i];
     if (
@@ -742,13 +673,10 @@ function checkCollision() {
       playerY + hitboxMargin < gunItem.y + gunItemHeight - hitboxMargin &&
       playerY + playerHeight - hitboxMargin > gunItem.y + hitboxMargin
     ) {
-      // Automatically damage boss when gun collected
       if (bossActive && bossHealth > 0 && !bossDefeated) {
         bossHealth--;
-        score += 500;  // Bonus for hitting boss
-        safePlayAudio(badItemSound);  // Hit sound
-        
-        // Only stun if boss still has health remaining
+        score += 500;
+        safePlayAudio(badItemSound);
         if (bossHealth > 0) {
           bossStunned = true;
           bossStunTimer = bossStunDuration;
@@ -759,197 +687,123 @@ function checkCollision() {
   }
 }
 
-// Reset item position and speed
 function resetItems() {
-  // Check spawn delay (from nuke)
   if (spawnDelay > 0) {
-    spawnDelay -= 1 / 60;  // Decrease by 1 frame at 60fps
-    return;  // Don't spawn anything during delay
+    spawnDelay -= _dt / 60;
+    return;
   }
-  
-  // Pause spawning during boss defeat animation
+
   if (bossDefeated && bossDefeatTimer > 0) {
-    return;  // Don't spawn anything during boss defeat
+    return;
   }
-  
-// During boss fight: only spawn burgers, clock, and gun
-if (bossActive && bossHealth > 0) {
-  if (goodItems.length + clockItems.length + gunItems.length < 6) {
-    var randomNum = Math.random();
-    var spawnableWidth = GAME_WIDTH - SCREEN_MARGIN_LEFT - SCREEN_MARGIN_RIGHT;
-    
-    if (randomNum < 0.94) {  // 94% burgers
-    var goodItem = {
-    x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - goodItemWidth),
-    y: -goodItemHeight,
-    speed: itemSpeed
-  };
-  goodItems.push(goodItem);
-    } else if (randomNum < 0.96) {  // 2% clock
-      var clockItem = {
-    x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - clockItemWidth),
-    y: -clockItemHeight,
-    speed: itemSpeed
-  };
-  clockItems.push(clockItem);
-    } else {  // 4% gun ← This is the gun spawn rate!
-      var gunItem = {
-        x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - gunItemWidth),
-        y: -gunItemHeight,
-        speed: itemSpeed
-      };
-      gunItems.push(gunItem);
+
+  if (bossActive && bossHealth > 0) {
+    if (goodItems.length + clockItems.length + gunItems.length < 6) {
+      var randomNum = Math.random();
+      var spawnableWidth = GAME_WIDTH - SCREEN_MARGIN_LEFT - SCREEN_MARGIN_RIGHT;
+      if (randomNum < 0.94) {
+        var goodItem = {
+          x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - goodItemWidth),
+          y: -goodItemHeight,
+          speed: itemSpeed
+        };
+        goodItems.push(goodItem);
+      } else if (randomNum < 0.96) {
+        var clockItem = {
+          x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - clockItemWidth),
+          y: -clockItemHeight,
+          speed: itemSpeed
+        };
+        clockItems.push(clockItem);
+      } else {
+        var gunItem = {
+          x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - gunItemWidth),
+          y: -gunItemHeight,
+          speed: itemSpeed
+        };
+        gunItems.push(gunItem);
+      }
     }
+    return;
   }
-  return;
-}
-  
+
   if (goodItems.length + badItems.length + surpriseItems.length + shieldItems.length + clockItems.length + nukeItems.length + fireItems.length + comboItems.length < maxItems) {
     var randomNum = Math.random();
     var spawnableWidth = GAME_WIDTH - SCREEN_MARGIN_LEFT - SCREEN_MARGIN_RIGHT;
-    
-    // When shield, immunity, or COMBO is active, restrict spawning
-    // Combo only allows burgers, bombs, and medical kits
+
     var powerUpActive = shieldActive || isPlayerImmune;
-    var comboRestriction = comboActive;  // Combo has different restriction
-    
-    // Base spawn rates - adjusted based on speed
-    var burgerChance = 0.85;       // 85% burgers
-    var trashChance = 0.975;       // 12.5% trash
+    var comboRestriction = comboActive;
+
+    var burgerChance = 0.85;
+    var trashChance = 0.975;
     var currentChance = trashChance;
-    
-    // Speed-based item availability
-    // When combo is active: Only medical kits allowed (no other power-ups)
-    // When other power-ups active: No power-ups at all
+
     var canSpawnImmunity = itemSpeed >= 10 && itemSpeed < 20 && !powerUpActive && !comboRestriction;
     var canSpawnShield = itemSpeed >= 10 && !powerUpActive && !comboRestriction;
     var canSpawnFire = itemSpeed >= 10 && !powerUpActive && !comboRestriction;
-    var canSpawnMedical = !powerUpActive;  // Medical allowed even with combo
+    var canSpawnMedical = !powerUpActive;
     var canSpawnClock = itemSpeed >= 12 && !powerUpActive && !comboRestriction;
     var canSpawnNuke = itemSpeed >= 16 && !powerUpActive && !comboRestriction;
-    var canSpawnCombo = itemSpeed >= 18 && !powerUpActive && !comboRestriction;  // Combo at speed 18+
-    
-    // Immunity (1.0%) - only before speed 20 and no power-up active
-    if (canSpawnImmunity) {
-      currentChance += 0.01;  // 0.975 + 0.01 = 0.985
-      var immunityChance = currentChance;
-    }
-    
-    // Shield (0.5%) - only at speed 10+ and no power-up active
-    if (canSpawnShield) {
-      currentChance += 0.005;  // Add 0.005
-      var shieldChance = currentChance;
-    }
-    
-    // Fire (0.5%) - only at speed 10+ and no power-up active
-    if (canSpawnFire) {
-      currentChance += 0.005;  // Add 0.005
-      var fireChance = currentChance;
-    }
-    
-    // Medical (0.35%) - only when no power-up active
-    if (canSpawnMedical) {
-      currentChance += 0.0035;
-      var medicalChance = currentChance;
-    }
-    
-    // Clock - increased rate after speed 16
-    if (canSpawnClock) {
-      var clockRate = itemSpeed >= 16 ? 0.007 : 0.0035;  // Double rate at 16+ (0.7% vs 0.35%)
-      currentChance += clockRate;
-      var clockChance = currentChance;
-    }
-    
-    // Nuke - increased rate after speed 16
-    if (canSpawnNuke) {
-      var nukeRate = itemSpeed >= 16 ? 0.006 : 0.003;  // Double rate at 16+ (0.6% vs 0.3%)
-      currentChance += nukeRate;
-      var nukeChance = currentChance;
-    }
-    
-    // Combo (0.4%) - rare ultimate power at speed 18+
-    if (canSpawnCombo) {
-      currentChance += 0.004;
-      var comboChance = currentChance;
-    }
-    
-    // Spawn items based on calculated chances
+    var canSpawnCombo = itemSpeed >= 18 && !powerUpActive && !comboRestriction;
+
+    if (canSpawnImmunity) { currentChance += 0.01; var immunityChance = currentChance; }
+    if (canSpawnShield)   { currentChance += 0.005; var shieldChance = currentChance; }
+    if (canSpawnFire)     { currentChance += 0.005; var fireChance = currentChance; }
+    if (canSpawnMedical)  { currentChance += 0.0035; var medicalChance = currentChance; }
+    if (canSpawnClock)    { var clockRate = itemSpeed >= 16 ? 0.007 : 0.0035; currentChance += clockRate; var clockChance = currentChance; }
+    if (canSpawnNuke)     { var nukeRate = itemSpeed >= 16 ? 0.006 : 0.003; currentChance += nukeRate; var nukeChance = currentChance; }
+    if (canSpawnCombo)    { currentChance += 0.004; var comboChance = currentChance; }
+
     if (randomNum < burgerChance) {
-      var goodItem = {
-        x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - goodItemWidth),
-        y: -goodItemHeight,
-        speed: itemSpeed
-      };
+      var goodItem = { x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - goodItemWidth), y: -goodItemHeight, speed: itemSpeed };
       goodItems.push(goodItem);
     } else if (randomNum < trashChance) {
-      var badItem = {
-        x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - badItemWidth),
-        y: -badItemHeight,
-        speed: itemSpeed
-      };
+      var badItem = { x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - badItemWidth), y: -badItemHeight, speed: itemSpeed };
       badItems.push(badItem);
     } else if (canSpawnImmunity && randomNum < immunityChance) {
-      var surpriseItem = {
-        x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - surpriseItemWidth),
-        y: -surpriseItemHeight,
-        speed: itemSpeed
-      };
+      var surpriseItem = { x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - surpriseItemWidth), y: -surpriseItemHeight, speed: itemSpeed };
       surpriseItems.push(surpriseItem);
     } else if (canSpawnShield && randomNum < shieldChance) {
-      var shieldItem = {
-        x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - shieldItemWidth),
-        y: -shieldItemHeight,
-        speed: itemSpeed
-      };
+      var shieldItem = { x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - shieldItemWidth), y: -shieldItemHeight, speed: itemSpeed };
       shieldItems.push(shieldItem);
     } else if (canSpawnFire && randomNum < fireChance) {
-      var fireItem = {
-        x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - fireItemWidth),
-        y: -fireItemHeight,
-        speed: itemSpeed
-      };
+      var fireItem = { x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - fireItemWidth), y: -fireItemHeight, speed: itemSpeed };
       fireItems.push(fireItem);
     } else if (canSpawnMedical && randomNum < medicalChance) {
-      var medicalItem = {
-        x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - medicalItemWidth),
-        y: -medicalItemHeight,
-        speed: itemSpeed
-      };
+      var medicalItem = { x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - medicalItemWidth), y: -medicalItemHeight, speed: itemSpeed };
       medicalItems.push(medicalItem);
     } else if (canSpawnClock && randomNum < clockChance) {
-      var clockItem = {
-        x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - clockItemWidth),
-        y: -clockItemHeight,
-        speed: itemSpeed
-      };
+      var clockItem = { x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - clockItemWidth), y: -clockItemHeight, speed: itemSpeed };
       clockItems.push(clockItem);
     } else if (canSpawnNuke && randomNum < nukeChance) {
-      var nukeItem = {
-        x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - nukeItemWidth),
-        y: -nukeItemHeight,
-        speed: itemSpeed
-      };
+      var nukeItem = { x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - nukeItemWidth), y: -nukeItemHeight, speed: itemSpeed };
       nukeItems.push(nukeItem);
     } else if (canSpawnCombo && randomNum < comboChance) {
-      var comboItem = {
-        x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - comboItemWidth),
-        y: -comboItemHeight,
-        speed: itemSpeed
-      };
+      var comboItem = { x: SCREEN_MARGIN_LEFT + Math.random() * (spawnableWidth - comboItemWidth), y: -comboItemHeight, speed: itemSpeed };
       comboItems.push(comboItem);
     }
   }
 }
 
-// Update game objects and render
-function update() {
-  if (!gameStarted || !allImagesLoaded) return;
-  
+// ─── MAIN GAME LOOP ───────────────────────────────────────────────────────────
+// timestamp is provided by requestAnimationFrame.
+// dt normalizes all movement to 60fps:
+//   dt = 1.0  at 60Hz  (16.7ms/frame)
+//   dt = 2.0  at 120Hz (8.3ms/frame)
+//   dt = 2.4  at 144Hz (6.9ms/frame)
+// Capped at 3 to prevent huge jumps when tab is backgrounded.
+var _dt = 1;  // Global dt accessible by helper functions (resetItems, updatePlayerPosition)
+
+function update(timestamp) {
+  if (!gameStarted || !allImagesLoaded) { requestAnimationFrame(update); return; }
+
+  _dt = lastTime ? Math.min((timestamp - lastTime) / (1000 / 60), 3) : 1;
+  lastTime = timestamp;
+
   ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
   updatePlayerPosition();
-  
-  // Draw title at top - Updated font
+
   ctx.font = "bold 42px 'Arial Black', Arial, sans-serif";
   ctx.fillStyle = "#FFD700";
   ctx.strokeStyle = "black";
@@ -957,16 +811,14 @@ function update() {
   ctx.textAlign = "center";
   ctx.strokeText("BURGER DROP", GAME_WIDTH / 2, 50);
   ctx.fillText("BURGER DROP", GAME_WIDTH / 2, 50);
-  
-  // Draw platform support text - Updated font
+
   ctx.font = "bold 16px Arial";
   ctx.fillStyle = "white";
   ctx.strokeStyle = "black";
   ctx.lineWidth = 2;
   ctx.strokeText("Mobile & PC Supported", GAME_WIDTH / 2, 75);
   ctx.fillText("Mobile & PC Supported", GAME_WIDTH / 2, 75);
-  
-  // Draw instructions - Updated font
+
   ctx.font = "bold 18px Arial";
   ctx.fillStyle = "lightblue";
   ctx.strokeStyle = "black";
@@ -982,176 +834,142 @@ function update() {
     ctx.strokeText("Catch Burgers! Avoid Trash!", GAME_WIDTH / 2, 120);
     ctx.fillText("Catch Burgers! Avoid Trash!", GAME_WIDTH / 2, 120);
   }
-  
-  // Reset text alignment for other text
   ctx.textAlign = "left";
 
   if (isPlayerImmune) {
     ctx.drawImage(playerImage, playerX, playerY, playerWidth, playerHeight);
   } else {
-    ctx.drawImage(
-      playerImageOriginal,
-      playerX,
-      playerY,
-      playerWidth,
-      playerHeight
-    );
+    ctx.drawImage(playerImageOriginal, playerX, playerY, playerWidth, playerHeight);
   }
 
-  // Draw good items (Burger Emoji 🍔)
+  // Good items
   for (var i = 0; i < goodItems.length; i++) {
     var goodItem = goodItems[i];
     ctx.font = goodItemWidth + "px Arial";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText("🍔", goodItem.x + goodItemWidth/2, goodItem.y + goodItemHeight/2);
-    goodItem.y += goodItem.speed;
-    if (goodItem.y > GAME_HEIGHT) {
-      goodItems.splice(i, 1);
-    }
+    goodItem.y += goodItem.speed * _dt;
+    if (goodItem.y > GAME_HEIGHT) { goodItems.splice(i, 1); }
   }
 
-  // Draw bad items (Bomb Emoji 💣)
+  // Bad items
   for (var i = 0; i < badItems.length; i++) {
     var badItem = badItems[i];
     ctx.font = badItemWidth + "px Arial";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText("💣", badItem.x + badItemWidth/2, badItem.y + badItemHeight/2);
-    badItem.y += badItem.speed;
-    if (badItem.y > GAME_HEIGHT) {
-      badItems.splice(i, 1);
-    }
+    badItem.y += badItem.speed * _dt;
+    if (badItem.y > GAME_HEIGHT) { badItems.splice(i, 1); }
   }
 
-  // Draw surprise items (Germ Emoji 🦠)
+  // Surprise items
   for (var i = 0; i < surpriseItems.length; i++) {
     var surpriseItem = surpriseItems[i];
     ctx.font = surpriseItemWidth + "px Arial";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText("🦠", surpriseItem.x + surpriseItemWidth/2, surpriseItem.y + surpriseItemHeight/2);
-    surpriseItem.y += surpriseItem.speed;
-    if (surpriseItem.y > GAME_HEIGHT) {
-      surpriseItems.splice(i, 1);
-    }
+    surpriseItem.y += surpriseItem.speed * _dt;
+    if (surpriseItem.y > GAME_HEIGHT) { surpriseItems.splice(i, 1); }
   }
 
-  // Draw medical items (Medical Helmet Emoji ⛑️)
+  // Medical items
   for (var i = 0; i < medicalItems.length; i++) {
     var medicalItem = medicalItems[i];
     ctx.font = medicalItemWidth + "px Arial";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText("⛑️", medicalItem.x + medicalItemWidth/2, medicalItem.y + medicalItemHeight/2);
-    medicalItem.y += medicalItem.speed;
-    if (medicalItem.y > GAME_HEIGHT) {
-      medicalItems.splice(i, 1);
-    }
+    medicalItem.y += medicalItem.speed * _dt;
+    if (medicalItem.y > GAME_HEIGHT) { medicalItems.splice(i, 1); }
   }
 
-  // Draw shield items (Shield Emoji 🛡️)
+  // Shield items
   for (var i = 0; i < shieldItems.length; i++) {
     var shieldItem = shieldItems[i];
     ctx.font = shieldItemWidth + "px Arial";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText("🛡️", shieldItem.x + shieldItemWidth/2, shieldItem.y + shieldItemHeight/2);
-    shieldItem.y += shieldItem.speed;
-    if (shieldItem.y > GAME_HEIGHT) {
-      shieldItems.splice(i, 1);
-    }
+    shieldItem.y += shieldItem.speed * _dt;
+    if (shieldItem.y > GAME_HEIGHT) { shieldItems.splice(i, 1); }
   }
 
-  // Draw clock items (Clock Emoji 🕐)
+  // Clock items
   for (var i = 0; i < clockItems.length; i++) {
     var clockItem = clockItems[i];
     ctx.font = clockItemWidth + "px Arial";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText("🕐", clockItem.x + clockItemWidth/2, clockItem.y + clockItemHeight/2);
-    clockItem.y += clockItem.speed;
-    if (clockItem.y > GAME_HEIGHT) {
-      clockItems.splice(i, 1);
-    }
+    clockItem.y += clockItem.speed * _dt;
+    if (clockItem.y > GAME_HEIGHT) { clockItems.splice(i, 1); }
   }
 
-  // Draw nuke items (Fries Emoji 🍟)
+  // Nuke items
   for (var i = 0; i < nukeItems.length; i++) {
     var nukeItem = nukeItems[i];
     ctx.font = nukeItemWidth + "px Arial";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText("🍟", nukeItem.x + nukeItemWidth/2, nukeItem.y + nukeItemHeight/2);
-    nukeItem.y += nukeItem.speed;
-    if (nukeItem.y > GAME_HEIGHT) {
-      nukeItems.splice(i, 1);
-    }
+    nukeItem.y += nukeItem.speed * _dt;
+    if (nukeItem.y > GAME_HEIGHT) { nukeItems.splice(i, 1); }
   }
 
-  // Draw fire items (Fire Emoji 🔥)
+  // Fire items
   for (var i = 0; i < fireItems.length; i++) {
     var fireItem = fireItems[i];
     ctx.font = fireItemWidth + "px Arial";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText("🔥", fireItem.x + fireItemWidth/2, fireItem.y + fireItemHeight/2);
-    fireItem.y += fireItem.speed;
-    if (fireItem.y > GAME_HEIGHT) {
-      fireItems.splice(i, 1);
-    }
+    fireItem.y += fireItem.speed * _dt;
+    if (fireItem.y > GAME_HEIGHT) { fireItems.splice(i, 1); }
   }
 
-  // Draw combo items (Green Star Emoji ⭐ with green tint effect)
+  // Combo items
   for (var i = 0; i < comboItems.length; i++) {
     var comboItem = comboItems[i];
     ctx.font = comboItemWidth + "px Arial";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText("⭐", comboItem.x + comboItemWidth/2, comboItem.y + comboItemHeight/2);
-    comboItem.y += comboItem.speed;
-    if (comboItem.y > GAME_HEIGHT) {
-      comboItems.splice(i, 1);
-    }
+    comboItem.y += comboItem.speed * _dt;
+    if (comboItem.y > GAME_HEIGHT) { comboItems.splice(i, 1); }
   }
 
-  // Draw gun items (Gun Emoji 🔫 - for boss fight)
+  // Gun items
   for (var i = 0; i < gunItems.length; i++) {
     var gunItem = gunItems[i];
     ctx.font = gunItemWidth + "px Arial";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText("🔫", gunItem.x + gunItemWidth/2, gunItem.y + gunItemHeight/2);
-    gunItem.y += gunItem.speed;
-    if (gunItem.y > GAME_HEIGHT) {
-      gunItems.splice(i, 1);
-    }
+    gunItem.y += gunItem.speed * _dt;
+    if (gunItem.y > GAME_HEIGHT) { gunItems.splice(i, 1); }
   }
-  
-  // Draw boss (Robot Emoji 🤖)
+
+  // Boss
   if (bossActive) {
-    // Add stun flash effect
     if (bossStunned && Math.floor(bossStunTimer / 5) % 2 === 0) {
-      // Flash white when stunned
       ctx.shadowColor = "white";
       ctx.shadowBlur = 20;
     }
-    
-    // Apply shake effect during defeat
     var shakeX = 0;
     var shakeY = 0;
     if (bossShakeAmount > 0) {
       shakeX = (Math.random() - 0.5) * bossShakeAmount * 2;
       shakeY = (Math.random() - 0.5) * bossShakeAmount * 2;
     }
-    
     ctx.font = bossWidth + "px Arial";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText("🤖", bossX + bossWidth/2 + shakeX, bossY + bossHeight/2 + shakeY);
-    ctx.shadowBlur = 0;  // Reset shadow
-    
-    // Draw boss health bar only if alive
+    ctx.shadowBlur = 0;
+
     if (bossHealth > 0 && !bossDefeated) {
       ctx.font = "bold 24px 'Arial Black', Arial, sans-serif";
       ctx.fillStyle = "white";
@@ -1160,37 +978,28 @@ function update() {
       ctx.textAlign = "left";
       ctx.strokeText("BOSS:", 10, 50);
       ctx.fillText("BOSS:", 10, 50);
-      
-      // Draw target emojis for health
       ctx.font = "30px Arial";
       for (var i = 0; i < bossHealth; i++) {
         ctx.fillText("🎯", 90 + (i * 40), 50);
       }
-      ctx.textAlign = "center";  // Reset for boss rendering
+      ctx.textAlign = "center";
     }
   }
-  
-  // Draw boss beams
+
+  // Boss beams
   for (var i = 0; i < bossBeams.length; i++) {
     var beam = bossBeams[i];
-    
     if (beam.type === 'narrow') {
-      // Narrow red laser beam
       ctx.fillStyle = "rgba(255, 0, 0, 0.8)";
       ctx.fillRect(beam.x, beam.y, beam.width, beam.height);
-      
-      // Glow effect
       ctx.shadowColor = "red";
       ctx.shadowBlur = 10;
       ctx.fillStyle = "rgba(255, 100, 100, 0.6)";
       ctx.fillRect(beam.x - 2, beam.y, beam.width + 4, beam.height);
       ctx.shadowBlur = 0;
     } else if (beam.type === 'wide') {
-      // Wide horizontal laser beam
       ctx.fillStyle = "rgba(255, 50, 0, 0.7)";
       ctx.fillRect(beam.x, beam.y, beam.width, beam.height);
-      
-      // Strong glow effect for wide beam
       ctx.shadowColor = "orange";
       ctx.shadowBlur = 20;
       ctx.fillStyle = "rgba(255, 150, 0, 0.5)";
@@ -1198,12 +1007,11 @@ function update() {
       ctx.shadowBlur = 0;
     }
   }
-  
-  // Reset text alignment
+
   ctx.textAlign = "left";
   ctx.textBaseline = "alphabetic";
 
-  // Draw shield line effect (80 pixels above player)
+  // Shield line
   if (shieldActive) {
     var shieldY = playerY - 375;
     ctx.strokeStyle = "cyan";
@@ -1214,26 +1022,22 @@ function update() {
     ctx.moveTo(0, shieldY);
     ctx.lineTo(GAME_WIDTH, shieldY);
     ctx.stroke();
-    ctx.shadowBlur = 0;  // Reset shadow
-    
-    // Check for items passing through shield
+    ctx.shadowBlur = 0;
     for (var i = badItems.length - 1; i >= 0; i--) {
       var badItem = badItems[i];
       if (badItem.y + badItemHeight >= shieldY && badItem.y <= shieldY + 4) {
-        badItems.splice(i, 1);  // Destroy bad item silently
+        badItems.splice(i, 1);
       }
     }
-    
-    // Triple burger points when passing through shield
     for (var i = 0; i < goodItems.length; i++) {
       var goodItem = goodItems[i];
       if (goodItem.y + goodItemHeight >= shieldY && goodItem.y <= shieldY + 4 && !goodItem.shieldTripled) {
-        goodItem.shieldTripled = true;  // Mark as tripled
+        goodItem.shieldTripled = true;
       }
     }
   }
-  
-  // Draw fire line effect (80 pixels above player) - Auto-collects burgers only
+
+  // Fire line
   if (fireActive) {
     var fireY = playerY - 380;
     ctx.strokeStyle = "red";
@@ -1244,75 +1048,63 @@ function update() {
     ctx.moveTo(0, fireY);
     ctx.lineTo(GAME_WIDTH, fireY);
     ctx.stroke();
-    ctx.shadowBlur = 0;  // Reset shadow
-    
-    // Auto-collect burgers passing through fire line
+    ctx.shadowBlur = 0;
     for (var i = goodItems.length - 1; i >= 0; i--) {
       var goodItem = goodItems[i];
       if (goodItem.y + goodItemHeight >= fireY && goodItem.y <= fireY + 4) {
-        // Award points for burger
         var pointMultiplier = itemSpeed >= maxFallSpeed ? 25 : 10;
         var points = pointMultiplier * itemSpeed;
-        if (goodItem.shieldTripled) {
-          points *= 3;  // Still honor shield tripling if both active
-        }
+        if (goodItem.shieldTripled) { points *= 3; }
         score += points;
         safePlayAudio(goodItemSound);
-        goodItems.splice(i, 1);  // Remove burger (auto-collected)
+        goodItems.splice(i, 1);
       }
     }
   }
-  
-  // Draw combo line effect (80 pixels above player) - GREEN combines Shield + Fire
+
+  // Combo line
   if (comboActive) {
     var comboY = playerY - 370;
-    ctx.strokeStyle = "lime";  // Bright green
-    ctx.lineWidth = 5;  // Slightly thicker than others
+    ctx.strokeStyle = "lime";
+    ctx.lineWidth = 5;
     ctx.shadowColor = "lime";
-    ctx.shadowBlur = 15;  // More glow
+    ctx.shadowBlur = 15;
     ctx.beginPath();
     ctx.moveTo(0, comboY);
     ctx.lineTo(GAME_WIDTH, comboY);
     ctx.stroke();
-    ctx.shadowBlur = 0;  // Reset shadow
-    
-    // Destroy bad items (like shield)
+    ctx.shadowBlur = 0;
     for (var i = badItems.length - 1; i >= 0; i--) {
       var badItem = badItems[i];
       if (badItem.y + badItemHeight >= comboY && badItem.y <= comboY + 4) {
-        badItems.splice(i, 1);  // Destroy bad item silently
+        badItems.splice(i, 1);
       }
     }
-    
-    // Auto-collect burgers with triple points (combines fire auto-collect + shield triple)
     for (var i = goodItems.length - 1; i >= 0; i--) {
       var goodItem = goodItems[i];
       if (goodItem.y + goodItemHeight >= comboY && goodItem.y <= comboY + 4) {
-        // Award triple points for burger (combo power!)
         var pointMultiplier = itemSpeed >= maxFallSpeed ? 25 : 10;
-        var points = (pointMultiplier * itemSpeed) * 3;  // Always triple!
+        var points = (pointMultiplier * itemSpeed) * 3;
         score += points;
         safePlayAudio(goodItemSound);
-        goodItems.splice(i, 1);  // Remove burger (auto-collected with triple points)
+        goodItems.splice(i, 1);
       }
     }
   }
 
   checkCollision();
 
-  // Draw score with trophy emoji - Updated font style
+  // Score
   ctx.font = "bold 28px 'Arial Black', Arial, sans-serif";
   ctx.fillStyle = "orange";
   ctx.strokeStyle = "black";
   ctx.lineWidth = 3;
   ctx.strokeText("🏆 " + Math.floor(score), 10, 150);
   ctx.fillText("🏆 " + Math.floor(score), 10, 150);
-  if(score <= 0) {
-    score = 0; 
-  }
+  if (score <= 0) { score = 0; }
   window.parent.postMessage({ type: 'bhb:score', score: Math.floor(score) }, '*');
 
-  // Draw Speed with lightning emoji - Updated font style and MAX indicator
+  // Speed
   ctx.font = "bold 28px 'Arial Black', Arial, sans-serif";
   ctx.fillStyle = "yellow";
   ctx.strokeStyle = "black";
@@ -1321,14 +1113,14 @@ function update() {
   ctx.strokeText(speedText, 220, 150);
   ctx.fillText(speedText, 220, 150);
 
-  // Draw hearts (stacked vertically on right side)
+  // Hearts
   for (var i = 0; i < hearts; i++) {
-    var heartX = GAME_WIDTH - heartWidth - 10;  // Right side with 10px margin
-    var heartY = 10 + (i * (heartHeight + 10));  // Stack vertically with 10px spacing
+    var heartX = GAME_WIDTH - heartWidth - 10;
+    var heartY = 10 + (i * (heartHeight + 10));
     ctx.drawImage(heartImage, heartX, heartY, heartWidth, heartHeight);
   }
-  
-  // Draw boss countdown
+
+  // Boss countdown
   if (bossCountdownStarted && !bossActive) {
     ctx.font = "bold 36px 'Arial Black', Arial, sans-serif";
     ctx.fillStyle = "red";
@@ -1348,8 +1140,7 @@ function update() {
     ctx.strokeText("IMMUNITY: " + Math.floor(immunityTimer) + "s", 10, 180);
     ctx.fillText("IMMUNITY: " + Math.floor(immunityTimer) + "s", 10, 180);
   }
-  
-  // Draw shield timer
+
   if (shieldActive) {
     ctx.font = "bold 26px 'Arial Black', Arial, sans-serif";
     ctx.fillStyle = "cyan";
@@ -1358,8 +1149,7 @@ function update() {
     ctx.strokeText("SHIELD: " + Math.floor(shieldTimer) + "s", 10, 210);
     ctx.fillText("SHIELD: " + Math.floor(shieldTimer) + "s", 10, 210);
   }
-  
-  // Draw fire timer
+
   if (fireActive) {
     ctx.font = "bold 26px 'Arial Black', Arial, sans-serif";
     ctx.fillStyle = "orange";
@@ -1368,18 +1158,16 @@ function update() {
     ctx.strokeText("FIRE: " + Math.floor(fireTimer) + "s", 10, 240);
     ctx.fillText("FIRE: " + Math.floor(fireTimer) + "s", 10, 240);
   }
-  
-  // Draw combo timer
+
   if (comboActive) {
     ctx.font = "bold 28px 'Arial Black', Arial, sans-serif";
-    ctx.fillStyle = "lime";  // Bright green
+    ctx.fillStyle = "lime";
     ctx.strokeStyle = "black";
-    ctx.lineWidth = 4;  // Thicker outline for emphasis
+    ctx.lineWidth = 4;
     ctx.strokeText("⭐ COMBO: " + Math.floor(comboTimer) + "s ⭐", 10, 270);
     ctx.fillText("⭐ COMBO: " + Math.floor(comboTimer) + "s ⭐", 10, 270);
   }
 
-  // Show control mode indicator only on mobile
   if (isMobile) {
     ctx.font = "16px Arial";
     ctx.fillStyle = tiltEnabled ? "lightgreen" : "orange";
@@ -1396,47 +1184,37 @@ function update() {
     ctx.strokeText("🖱️ MOUSE MODE", 10, GAME_HEIGHT - 40);
     ctx.fillText("🖱️ MOUSE MODE", 10, GAME_HEIGHT - 40);
   }
-  
-  // Draw credits at bottom center
+
   ctx.font = "14px Arial";
   ctx.fillStyle = "white";
   ctx.strokeStyle = "black";
   ctx.lineWidth = 2;
   ctx.textAlign = "center";
-  ctx.strokeText("V6.94 Created by BHaleyArt", GAME_WIDTH / 2, GAME_HEIGHT - 10);
-  ctx.fillText("V6.94 Created by BHaleyArt", GAME_WIDTH / 2, GAME_HEIGHT - 10);
+  ctx.strokeText("V7 Created by BHaleyArt", GAME_WIDTH / 2, GAME_HEIGHT - 10);
+  ctx.fillText("V7 Created by BHaleyArt", GAME_WIDTH / 2, GAME_HEIGHT - 10);
   ctx.textAlign = "left";
-  
-  // Draw damage flash effect (red screen overlay)
+
+  // Damage flash
   if (damageFlash > 0) {
-    ctx.fillStyle = "rgba(255, 0, 0, " + (damageFlash * 0.4) + ")";  // Red with transparency
+    ctx.fillStyle = "rgba(255, 0, 0, " + (damageFlash * 0.4) + ")";
     ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
-    damageFlash -= damageFlashDecay;  // Fade out
+    damageFlash -= damageFlashDecay * _dt;
     if (damageFlash < 0) damageFlash = 0;
   }
-  
-  // Draw nuke flash effect (white and yellow faded overlay)
+
+  // Nuke flash
   if (nukeFlash > 0) {
-    // Alternate between white and yellow for flickering effect
     var flashColor = Math.floor(nukeFlash * 10) % 2 === 0 ? "rgba(255, 255, 255, " : "rgba(255, 255, 0, ";
-    ctx.fillStyle = flashColor + (nukeFlash * 0.5) + ")";  // White/yellow with transparency
+    ctx.fillStyle = flashColor + (nukeFlash * 0.5) + ")";
     ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
-    nukeFlash -= nukeFlashDecay;  // Fade out faster than damage
+    nukeFlash -= nukeFlashDecay * _dt;
     if (nukeFlash < 0) nukeFlash = 0;
   }
 
   if (hearts <= 0) {
     isGameOver = true;
-    if (!musicMuted) {
-      backgroundMusic.pause();
-    }
-    ctx.drawImage(
-      gameOverImage,
-      GAME_WIDTH / 2 - 150,
-      GAME_HEIGHT / 2 - 280,  // Raised from -150 to -200
-      300,
-      300
-    );
+    if (!musicMuted) { backgroundMusic.pause(); }
+    ctx.drawImage(gameOverImage, GAME_WIDTH / 2 - 150, GAME_HEIGHT / 2 - 280, 300, 300);
     if (score < 1000) {
       safePlayAudio(lowScoreSound);
     } else {
@@ -1444,79 +1222,57 @@ function update() {
     }
     document.body.appendChild(restartButton);
     document.body.appendChild(watchButton);
-    ctx.drawImage(
-      gameOverPileImage,
-      -70,
-      GAME_HEIGHT - 420,  // Raised from -480 to -530
-      600,
-      600
-    );
+    ctx.drawImage(gameOverPileImage, -70, GAME_HEIGHT - 420, 600, 600);
     return;
   }
 
-  // Update immunity timer
+  // Power-up timers
   if (isPlayerImmune) {
-    immunityTimer -= 1 / 60;
+    immunityTimer -= _dt / 60;
     if (immunityTimer <= 0) {
       isPlayerImmune = false;
-      if (!musicMuted) {
-        immuneMusic.pause();
-        immuneMusic.currentTime = 0;
-      }
+      if (!musicMuted) { immuneMusic.pause(); immuneMusic.currentTime = 0; }
       playerImage.src = "assets/player_original.png";
     }
   }
-  
-  // Update shield timer
+
   if (shieldActive) {
-    shieldTimer -= 1 / 60;
-    if (shieldTimer <= 0) {
-      shieldActive = false;
-    }
-  }
-  
-  // Update fire timer
-  if (fireActive) {
-    fireTimer -= 1 / 60;
-    if (fireTimer <= 0) {
-      fireActive = false;
-    }
-  }
-  
-  // Update combo timer
-  if (comboActive) {
-    comboTimer -= 1 / 60;
-    if (comboTimer <= 0) {
-      comboActive = false;
-    }
+    shieldTimer -= _dt / 60;
+    if (shieldTimer <= 0) { shieldActive = false; }
   }
 
-  // Increase speed with reduced acceleration after speed 10
-  var currentAcceleration = itemSpeed >= 10 ? fallAcceleration * 0.5 : fallAcceleration;
-  itemSpeed += currentAcceleration;
-  if (itemSpeed > maxFallSpeed) {
-    itemSpeed = maxFallSpeed;
+  if (fireActive) {
+    fireTimer -= _dt / 60;
+    if (fireTimer <= 0) { fireActive = false; }
   }
-  
-  // Boss fight countdown logic
+
+  if (comboActive) {
+    comboTimer -= _dt / 60;
+    if (comboTimer <= 0) { comboActive = false; }
+  }
+
+  // Speed acceleration
+  var currentAcceleration = itemSpeed >= 10 ? fallAcceleration * 0.5 : fallAcceleration;
+  itemSpeed += currentAcceleration * _dt;
+  if (itemSpeed > maxFallSpeed) { itemSpeed = maxFallSpeed; }
+
+  // Boss countdown
   if ((itemSpeed >= maxFallSpeed || developerMode) && !bossCountdownStarted && !bossActive) {
     bossCountdownStarted = true;
     bossCountdownTimer = 10;
   }
-  
+
   if (bossCountdownStarted && !bossActive) {
-    bossCountdownTimer -= 1 / 60;
+    bossCountdownTimer -= _dt / 60;
     if (bossCountdownTimer <= 0) {
-      // Start boss fight!
       bossActive = true;
-      bossY = -100;  // Reset position above screen
+      bossY = -100;
       bossHealth = bossMaxHealth;
-      bossAttackPhase = 1;  // Reset to phase 1
+      bossAttackPhase = 1;
       bossPhaseTimer = 0;
       bossStunned = false;
       bossStunTimer = 0;
       hasGun = false;
-      // Clear all existing items except clock
       goodItems = [];
       badItems = [];
       surpriseItems = [];
@@ -1527,156 +1283,82 @@ function update() {
       nukeItems = [];
     }
   }
-  
-  // Update boss during boss fight
+
+  // Boss AI
   if (bossActive) {
-    // Only do boss AI if health > 0 and not defeated
     if (bossHealth > 0 && !bossDefeated) {
-      // Boss descends to target position
       if (bossY < bossTargetY) {
-        bossY += 2;  // Descend speed
+        bossY += 2 * _dt;
       } else {
-        // Update stun timer
         if (bossStunned) {
-          bossStunTimer--;
-          if (bossStunTimer <= 0) {
-            bossStunned = false;
-          }
-          // Skip boss movement and attacks while stunned, but continue game update
+          bossStunTimer -= _dt;
+          if (bossStunTimer <= 0) { bossStunned = false; }
         } else {
-          // Boss is not stunned - normal behavior
-          
-          // Update phase timer and cycle through phases
-          bossPhaseTimer++;
+          bossPhaseTimer += _dt;
           if (bossPhaseTimer >= bossPhaseDuration) {
             bossPhaseTimer = 0;
             bossAttackPhase++;
-            if (bossAttackPhase > 3) bossAttackPhase = 1;  // Cycle back to phase 1
-            bossShootTimer = 0;  // Reset shoot timer for new phase
+            if (bossAttackPhase > 3) bossAttackPhase = 1;
+            bossShootTimer = 0;
           }
-          
-          // PHASE 1: Side-to-side movement with downward beams
+
+          // Phase 1: side-to-side + narrow beams
           if (bossAttackPhase === 1) {
-            bossX += bossSpeed * bossDirection;
-            
-            // Bounce at edges
-            if (bossX <= 0) {
-              bossX = 0;
-              bossDirection = 1;
-            } else if (bossX >= GAME_WIDTH - bossWidth) {
-              bossX = GAME_WIDTH - bossWidth;
-              bossDirection = -1;
-            }
-            
-            // Shoot downward beams
-            bossShootTimer++;
+            bossX += bossSpeed * bossDirection * _dt;
+            if (bossX <= 0) { bossX = 0; bossDirection = 1; }
+            else if (bossX >= GAME_WIDTH - bossWidth) { bossX = GAME_WIDTH - bossWidth; bossDirection = -1; }
+            bossShootTimer += _dt;
             if (bossShootTimer >= bossShootInterval) {
               bossShootTimer = 0;
-              var beam = {
-                x: bossX + bossWidth / 2 - 5,
-                y: bossY + bossHeight,
-                width: 10,
-                height: 0,
-                growing: true,
-                type: 'narrow'
-              };
-              bossBeams.push(beam);
+              bossBeams.push({ x: bossX + bossWidth/2 - 5, y: bossY + bossHeight, width: 10, height: 0, growing: true, type: 'narrow' });
             }
           }
-          
-          // PHASE 2: Wide laser blasts downward from sides
+
+          // Phase 2: wide lasers from sides
           else if (bossAttackPhase === 2) {
-            bossShootTimer++;
-            
-            // Position boss on right or left
+            bossShootTimer += _dt;
             var phaseProgress = bossPhaseTimer / bossPhaseDuration;
             if (phaseProgress < 0.5) {
-              // First half: Right side
               bossX = GAME_WIDTH - bossWidth - 10;
               if (bossShootTimer === 30 || bossShootTimer === 90 || bossShootTimer === 150) {
-                // Wide downward laser from right side
-                var beam = {
-                  x: bossX + bossWidth / 2 - 60,  // Wide beam centered on boss
-                  y: bossY + bossHeight,
-                  width: 120,  // Wide beam
-                  height: 0,
-                  growing: true,
-                  type: 'wide'
-                };
-                bossBeams.push(beam);
+                bossBeams.push({ x: bossX + bossWidth/2 - 60, y: bossY + bossHeight, width: 120, height: 0, growing: true, type: 'wide' });
               }
             } else {
-              // Second half: Left side
               bossX = 10;
               if (bossShootTimer === 180 || bossShootTimer === 240) {
-                // Wide downward laser from left side
-                var beam = {
-                  x: bossX + bossWidth / 2 - 60,  // Wide beam centered on boss
-                  y: bossY + bossHeight,
-                  width: 120,  // Wide beam
-                  height: 0,
-                  growing: true,
-                  type: 'wide'
-                };
-                bossBeams.push(beam);
+                bossBeams.push({ x: bossX + bossWidth/2 - 60, y: bossY + bossHeight, width: 120, height: 0, growing: true, type: 'wide' });
               }
             }
           }
-          
-          // PHASE 3: Fast movement with occasional downward blasts
+
+          // Phase 3: fast movement + occasional blasts
           else if (bossAttackPhase === 3) {
-            bossX += (bossSpeed * 3) * bossDirection;  // 3x faster
-            
-            // Bounce at edges
-            if (bossX <= 0) {
-              bossX = 0;
-              bossDirection = 1;
-            } else if (bossX >= GAME_WIDTH - bossWidth) {
-              bossX = GAME_WIDTH - bossWidth;
-              bossDirection = -1;
-            }
-            
-            // Occasional downward blasts
-            bossShootTimer++;
-            if (bossShootTimer >= 120) {  // Every 2 seconds
+            bossX += (bossSpeed * 3) * bossDirection * _dt;
+            if (bossX <= 0) { bossX = 0; bossDirection = 1; }
+            else if (bossX >= GAME_WIDTH - bossWidth) { bossX = GAME_WIDTH - bossWidth; bossDirection = -1; }
+            bossShootTimer += _dt;
+            if (bossShootTimer >= 120) {
               bossShootTimer = 0;
-              var beam = {
-                x: bossX + bossWidth / 2 - 5,
-                y: bossY + bossHeight,
-                width: 10,
-                height: 0,
-                growing: true,
-                type: 'narrow'
-              };
-              bossBeams.push(beam);
+              bossBeams.push({ x: bossX + bossWidth/2 - 5, y: bossY + bossHeight, width: 10, height: 0, growing: true, type: 'narrow' });
             }
           }
         }
       }
     }
-    
-    // Update beams (always update, even during defeat)
+
+    // Update beams
     for (var i = bossBeams.length - 1; i >= 0; i--) {
       var beam = bossBeams[i];
-      
       if (beam.type === 'narrow' || beam.type === 'wide') {
-        // Both narrow and wide beams grow downward
         if (beam.growing) {
-          beam.height += 15;
-          if (beam.y + beam.height >= GAME_HEIGHT) {
-            beam.growing = false;
-          }
+          beam.height += 15 * _dt;
+          if (beam.y + beam.height >= GAME_HEIGHT) { beam.growing = false; }
         } else {
-          beam.height -= 10;
-          if (beam.height <= 0) {
-            bossBeams.splice(i, 1);
-            continue;
-          }
+          beam.height -= 10 * _dt;
+          if (beam.height <= 0) { bossBeams.splice(i, 1); continue; }
         }
       }
-      
-      // Check beam collision with player (only if not defeated)
-      if (!bossDefeated && !isPlayerImmune && 
+      if (!bossDefeated && !isPlayerImmune &&
           playerX < beam.x + beam.width &&
           playerX + playerWidth > beam.x &&
           playerY < beam.y + beam.height &&
@@ -1687,38 +1369,27 @@ function update() {
       }
     }
   }
-  
-  // Boss defeat triggers death animation
+
+  // Trigger defeat sequence
   if (bossActive && bossHealth <= 0 && !bossDefeated) {
     bossDefeated = true;
     bossDefeatTimer = bossDefeatDuration;
-    // Clear all lasers immediately
     bossBeams = [];
-    // Clear stun state
     bossStunned = false;
     bossStunTimer = 0;
-    // Award big bonus
     score += 100000;
-    // Reset speed to 10 if higher
-    if (itemSpeed > 10) {
-      itemSpeed = 15;
-    }
+    if (itemSpeed > 10) { itemSpeed = 15; }
   }
-  
-  // Boss defeat animation (shake then fly off)
+
+  // Defeat animation
   if (bossDefeated && bossDefeatTimer > 0) {
-    bossDefeatTimer--;
-    
-    // First half: Shake
+    bossDefeatTimer -= _dt;
     if (bossDefeatTimer > bossDefeatDuration / 2) {
       bossShakeAmount = 5;
     } else {
-      // Second half: Fly off screen upward
-      bossY -= 8;
+      bossY -= 8 * _dt;
       bossShakeAmount = 0;
     }
-    
-    // End of defeat sequence
     if (bossDefeatTimer <= 0) {
       bossActive = false;
       bossDefeated = false;
@@ -1728,22 +1399,22 @@ function update() {
     }
   }
 
-  spawnCounter++;
-  if (spawnCounter % 10 === 0) {
+  // Spawn counter — accumulator instead of modulo so dt works correctly
+  spawnCounter += _dt;
+  if (spawnCounter >= 10) {
+    spawnCounter = 0;
     resetItems();
   }
 
   requestAnimationFrame(update);
 }
 
-// Developer mode toggle function
 function toggleDevMode() {
   developerMode = !developerMode;
   var button = document.getElementById('devModeButton');
   if (developerMode) {
     button.innerText = 'DEV MODE: ON';
     button.classList.add('active');
-    // Immediately start boss countdown if not already started
     if (!bossCountdownStarted && !bossActive) {
       bossCountdownStarted = true;
       bossCountdownTimer = 10;
@@ -1754,46 +1425,38 @@ function toggleDevMode() {
   }
 }
 
-// restart button listener
-restartButton.addEventListener("click", function () {
+restartButton.addEventListener("click", function() {
   window.location.reload();
 });
 
-// Add click event listener to URL button
 watchButton.addEventListener("click", function() {
   window.location.href = ("https://youtube.com/@bhaleyart");
 });
 
-// Handle mouse movement (PC)
 canvas.addEventListener("mousemove", function(event) {
   if (!isMobile && !isGameOver && gameStarted) {
     var rect = canvas.getBoundingClientRect();
     var scaleX = GAME_WIDTH / rect.width;
     var mouseX = (event.clientX - rect.left) * scaleX;
     playerX = mouseX - playerWidth / 2;
-    // Constrain to screen boundaries with margins
     playerX = Math.max(SCREEN_MARGIN_LEFT, Math.min(GAME_WIDTH - playerWidth - SCREEN_MARGIN_RIGHT, playerX));
   }
 });
 
-// Handle touch movement (Mobile)
-canvas.addEventListener("touchmove", function (event) {
+canvas.addEventListener("touchmove", function(event) {
   if (!tiltEnabled && !isGameOver && gameStarted) {
     event.preventDefault();
     var rect = canvas.getBoundingClientRect();
     var scaleX = GAME_WIDTH / rect.width;
     var touchX = (event.touches[0].clientX - rect.left) * scaleX;
     playerX = touchX - playerWidth / 2;
-    // Constrain to screen boundaries with margins
     playerX = Math.max(SCREEN_MARGIN_LEFT, Math.min(GAME_WIDTH - playerWidth - SCREEN_MARGIN_RIGHT, playerX));
     targetPlayerX = playerX;
   }
 }, { passive: false });
 
-// Initialize canvas size
 setCanvasSize();
 
-// Handle window resize for mobile
 window.addEventListener("resize", function() {
   setCanvasSize();
 });
