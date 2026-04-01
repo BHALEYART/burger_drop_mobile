@@ -135,7 +135,7 @@ var lastTime = 0;
 // Device detection
 var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-var tiltEnabled = isMobile;
+var tiltEnabled = false;  // tilt removed — touch/drag only
 var tiltCalibrated = false;
 var tiltCenterGamma = 0;
 var tiltSensitivity = 3.5;
@@ -375,11 +375,7 @@ function startGame() {
     document.body.appendChild(musicMuteButton);
     document.body.appendChild(sfxMuteButton);
     if (isMobile) {
-      controlToggleButton.style.display = "block";
-      document.body.appendChild(controlToggleButton);
-      if (tiltEnabled) {
-        requestOrientationPermission();
-      }
+      // touch/drag only — no tilt button needed
     }
     setTimeout(function() {
       if (!musicMuted) {
@@ -423,77 +419,16 @@ sfxMuteButton.addEventListener("click", function() {
   }
 });
 
-function requestOrientationPermission() {
-  if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-    DeviceOrientationEvent.requestPermission()
-      .then(function(permissionState) {
-        if (permissionState === 'granted') {
-          enableTiltControls();
-        } else {
-          alert('Tilt permission denied. Using touch controls.');
-        }
-      })
-      .catch(function(error) {
-        console.error('Error requesting orientation permission:', error);
-        alert('Could not enable tilt controls. Using touch controls.');
-      });
-  } else {
-    enableTiltControls();
-  }
-}
-
-function enableTiltControls() {
-  tiltEnabled = true;
-  tiltCalibrated = false;
-  controlToggleButton.innerText = "📱 Tilt";
-  controlToggleButton.style.backgroundColor = "rgba(144, 238, 144, 0.8)";
-  window.addEventListener('deviceorientation', handleTilt);
-  setTimeout(function() {
-    if (!tiltCalibrated) {
-      tiltCenterGamma = 0;
-      tiltCalibrated = true;
-    }
-  }, 500);
-}
-
-function disableTiltControls() {
-  tiltEnabled = false;
-  controlToggleButton.innerText = "👆 Drag";
-  controlToggleButton.style.backgroundColor = "rgba(255, 165, 0, 0.8)";
-  window.removeEventListener('deviceorientation', handleTilt);
-}
-
-function handleTilt(event) {
-  if (!tiltEnabled || isGameOver || !gameStarted) return;
-  var gamma = event.gamma;
-  if (!tiltCalibrated) {
-    tiltCenterGamma = gamma;
-    tiltCalibrated = true;
-  }
-  var relativeTilt = gamma - tiltCenterGamma;
-  relativeTilt = Math.max(-maxTiltAngle, Math.min(maxTiltAngle, relativeTilt));
-  var tiltRatio = relativeTilt / maxTiltAngle;
-  targetPlayerX = (GAME_WIDTH / 2) + (tiltRatio * (GAME_WIDTH / 2) * tiltSensitivity);
-  targetPlayerX = Math.max(SCREEN_MARGIN_LEFT, Math.min(GAME_WIDTH - playerWidth - SCREEN_MARGIN_RIGHT, targetPlayerX));
-}
+function requestOrientationPermission() { /* tilt removed */ }
+function enableTiltControls()           { /* tilt removed */ }
+function disableTiltControls()          { /* tilt removed */ }
+function handleTilt()                   { /* tilt removed */ }
 
 function updatePlayerPosition() {
-  if (tiltEnabled && !isGameOver && gameStarted) {
-    // dt is captured in the outer update() scope via closure — see update()
-    playerX += (targetPlayerX - playerX) * Math.min(tiltSmoothing * _dt, 1);
-    playerX = Math.max(SCREEN_MARGIN_LEFT, Math.min(GAME_WIDTH - playerWidth - SCREEN_MARGIN_RIGHT, playerX));
-  }
+  // touch/drag only — tilt removed
 }
 
-if (isMobile) {
-  controlToggleButton.addEventListener("click", function() {
-    if (!tiltEnabled) {
-      requestOrientationPermission();
-    } else {
-      disableTiltControls();
-    }
-  });
-}
+// controlToggleButton removed — touch/drag only
 
 function checkCollision() {
   var hitboxMargin = 4;
@@ -824,8 +759,8 @@ function update(timestamp) {
   ctx.strokeStyle = "black";
   ctx.lineWidth = 2;
   if (isMobile) {
-    ctx.strokeText("Tilt or Drag to Move", GAME_WIDTH / 2, 100);
-    ctx.fillText("Tilt or Drag to Move", GAME_WIDTH / 2, 100);
+    ctx.strokeText("Drag to Move", GAME_WIDTH / 2, 100);
+    ctx.fillText("Drag to Move", GAME_WIDTH / 2, 100);
     ctx.strokeText("Catch Burgers! Avoid Trash!", GAME_WIDTH / 2, 120);
     ctx.fillText("Catch Burgers! Avoid Trash!", GAME_WIDTH / 2, 120);
   } else {
@@ -1169,15 +1104,7 @@ function update(timestamp) {
     ctx.fillText("⭐ COMBO: " + Math.floor(comboTimer) + "s ⭐", 10, 270);
   }
 
-  if (isMobile) {
-    ctx.font = "16px Arial";
-    ctx.fillStyle = tiltEnabled ? "lightgreen" : "orange";
-    ctx.strokeStyle = "black";
-    ctx.lineWidth = 2;
-    var controlText = tiltEnabled ? "📱 TILT MODE" : "👆 DRAG MODE";
-    ctx.strokeText(controlText, 10, GAME_HEIGHT - 40);
-    ctx.fillText(controlText, 10, GAME_HEIGHT - 40);
-  } else {
+  if (!isMobile) {
     ctx.font = "16px Arial";
     ctx.fillStyle = "lightblue";
     ctx.strokeStyle = "black";
@@ -1459,7 +1386,7 @@ canvas.addEventListener("mousemove", function(event) {
 });
 
 canvas.addEventListener("touchmove", function(event) {
-  if (!tiltEnabled && !isGameOver && gameStarted) {
+  if (!isGameOver && gameStarted) {
     event.preventDefault();
     var rect = canvas.getBoundingClientRect();
     var scaleX = GAME_WIDTH / rect.width;
