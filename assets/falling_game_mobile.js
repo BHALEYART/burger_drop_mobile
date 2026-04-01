@@ -1102,7 +1102,8 @@ function update(timestamp) {
   ctx.strokeText("🏆 " + Math.floor(score), 10, 150);
   ctx.fillText("🏆 " + Math.floor(score), 10, 150);
   if (score <= 0) { score = 0; }
-  window.parent.postMessage({ type: 'bhb:score', score: Math.floor(score) }, '*');
+  // Live score feed — portal uses this for the header display only (not leaderboard)
+  window.parent.postMessage({ type: 'bhb:score', game: 'burgerdrop', score: Math.floor(score) }, '*');
 
   // Speed
   ctx.font = "bold 28px 'Arial Black', Arial, sans-serif";
@@ -1219,6 +1220,20 @@ function update(timestamp) {
       safePlayAudio(lowScoreSound);
     } else {
       safePlayAudio(highScoreSound);
+    }
+    // Fire once to the parent portal for leaderboard submission
+    if (!window._burgerdropGameOverPosted) {
+      window._burgerdropGameOverPosted = true;
+      try {
+        window.parent.postMessage({
+          type:   'BHB_SCORE',
+          game:   'burgerdrop',
+          mode:   'campaign',
+          score:  Math.max(0, Math.floor(score)),
+          level:  1,
+          reason: 'gameover',
+        }, '*');
+      } catch (_) {}
     }
     document.body.appendChild(restartButton);
     document.body.appendChild(watchButton);
